@@ -1,0 +1,42 @@
+# ============================================================
+# llm-eval-diagnostics —— 环境锁定
+#
+# 导出自 conda 环境 `lmeval`，导出日期 2026-09-22。
+# 所有版本用 == 锁死：评测结论的可信度依赖「环境可复现」，
+# 版本漂移会静默改变分数，属于本项目要诊断的那类问题。
+#
+# 复现步骤（严格按顺序）：
+#   1) conda create -n lmeval python=3.11 -y
+#      conda activate lmeval
+#   2) python -m pip install torch==2.14.0+cu126 \
+#          --index-url https://download.pytorch.org/whl/cu126
+#   3) python -m pip install -r requirements.txt
+#
+# 为什么 torch 要单独装：
+#   Windows 上 PyPI 的 torch wheel 是 CPU 版，必须在 PyTorch 官方
+#   索引里取 CUDA 版；而该索引没有 transformers/datasets，所以拆成两步。
+# ============================================================
+
+# --- 推理后端（CUDA 版，见上方步骤 2 单独安装） ---
+# torch==2.14.0+cu126        # CUDA 运行时 12.6，wheel 自带，无需装 CUDA Toolkit
+
+# --- 核心依赖（Day 1 安装） ---
+numpy==2.4.6
+transformers==5.17.0
+datasets==5.0.1
+accelerate==1.15.0
+
+# --- 分析依赖（pandas 已作为 datasets 的依赖装入） ---
+pandas==3.0.6
+
+# --- Day 2 追加：评测框架 ---
+# 注意必须带 [hf] extra，否则不会安装 HF 后端依赖（torch/transformers/accelerate）
+# lm-eval[hf]==0.4.13
+
+# --- Day 11 起追加：数据质检与分析 ---
+# scipy==        # 二项分布检验、McNemar 配对检验
+# matplotlib==   # 方差图
+
+# --- Day 18 起追加：异步并发 ---
+# httpx==0.28.1  # 已作为 huggingface_hub 的依赖装入
+# aiohttp==3.14.3

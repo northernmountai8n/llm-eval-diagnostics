@@ -1,0 +1,56 @@
+# ============================================================
+# 设计原则：**代码与台账入库，原始结果不入库。**
+# runs/ 里的样本级 JSONL 动辄数百 MB，且可由命令重跑得到；
+# 把它们提交上去会让仓库膨胀、并让「可复现」退化成「拷结果」。
+# 需要留存的实验元信息，由 RUNS.md 承担。
+# ============================================================
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# --- 虚拟环境 ---
+.venv/
+venv/
+env/
+
+# --- 评测原始产物（体积大 / 可由脚本重跑）---
+runs/
+reports/figures/
+
+# --- 模型权重与缓存（动辄数 GB）---
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.gguf
+.cache/
+hf_cache/
+
+# --- 数据文件（原始 benchmark 副本不入库，用 datasets 库按需拉取）---
+*.parquet
+*.arrow
+*.jsonl
+# 例外：实验台账是刻意保留的交付物，必须入库
+!RUNS.md
+
+# --- Notebook ---
+.ipynb_checkpoints/
+
+# --- 编辑器 / 系统 ---
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+desktop.ini
+
+# --- 密钥：绝不入库 ---
+.env
+.env.*
+*.key
+*.pem
