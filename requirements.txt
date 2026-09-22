@@ -29,13 +29,23 @@ accelerate==1.15.0
 # --- 分析依赖（pandas 已作为 datasets 的依赖装入） ---
 pandas==3.0.6
 
-# --- Day 2 追加：评测框架 ---
-# 注意必须带 [hf] extra，否则不会安装 HF 后端依赖（torch/transformers/accelerate）
-# lm-eval[hf]==0.4.13
+# --- 评测框架（Day 2 安装）---
+# 必须带 [hf] extra，否则不会安装 HF 后端依赖（torch/transformers/accelerate）
+lm-eval[hf]==0.4.13
+scipy==1.17.1
+
+# --- 环境变量要求（不是 pip 包，但属于环境可复现性的一部分）---
+# HF_HUB_DISABLE_XET=1
+#   本机实测 hf-xet 1.6.0 在弱网下会以
+#     "CAS Client Error: Format error: I/O error: error decoding response body"
+#   中断，导致 safetensors 重建失败，最终表现为误导性的
+#     OSError: Can't load the model for 'Qwen/Qwen2.5-1.5B'（指向"路径错误"，实际路径没问题）
+#   禁用后回退经典 HTTP 下载（支持断点续传），实测稳定。
+#   设置：conda env config vars set HF_HUB_DISABLE_XET=1 -n lmeval
+#   同批设置的还有 HF_HOME / PIP_CACHE_DIR / TORCH_HOME，均指向 D:\桌面\个人\工程\ 下
 
 # --- Day 11 起追加：数据质检与分析 ---
-# scipy==        # 二项分布检验、McNemar 配对检验
-# matplotlib==   # 方差图
+# matplotlib==   # 方差图（scipy 已随 lm-eval 装入，见上方）
 
 # --- Day 18 起追加：异步并发 ---
 # httpx==0.28.1  # 已作为 huggingface_hub 的依赖装入
