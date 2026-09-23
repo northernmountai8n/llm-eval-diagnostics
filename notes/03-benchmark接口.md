@@ -236,6 +236,85 @@ stderr_fn(items) if (stderr_fn and len(items) > 1) else "N/A"
 
 ---
 
+## 七、实测验证（用本机缓存的 ai2_arc 数据集离线核对）
+
+上面全是从源码读出来的。但"读到了"不等于"验证过"——下面用**本地缓存的真实数据**核对每一条断言。
+（Day 2 评测的正是 test split 的前 100 条，所以这些就是模型真正看到的样本。）
+
+### 7.1 样本 0 的真实打分文本 —— 复现 `construct_requests`
+
+```
+ctx = 'Question: Which statement best explains why photosynthesis is the foundation of most food webs?\nAnswer:'
+
+idx=0  continuation=' Sunlight is the source of energy for nearly all ecosystems.'
+idx=1  continuation=' Most ecosystems are found on land instead of in water.'
+idx=2  continuation=' Carbon dioxide is more available than other gases.'
+idx=3  continuation=' The producers in all ecosystems are plants.'
+
+gold: answerKey='A' -> label.index('A') = 0
+```
+
+**模型算的是 `P(" Sunlight is..." | ctx)`，不是 `P("Sunlight is..." | ctx)`** —— 那个前导空格来自
+`target_delimiter` 的默认值 `" "`（`config/task.py:112`）。换掉这个空格就是换了个评测口径。
+
+### 7.2 选项长度确实差异很大（`acc` 与 `acc_norm` 不同的原因）
+
+| 统计量 | 前 100 条 |
+|---|---|
+| 同题内选项字符长度**极差** | 最小 0 / **中位 6** / **最大 39** |
+| 最长选项字符数 | 79 |
+
+中位极差 6 个字符，而答案平均长度约 23 字符——**约 26% 的长度差异**。这就是 `acc` 与 `acc_norm`
+能差出好几个点的物理来源。
+
+### 7.3 ⚠️ 但"正确选项更短"这个直觉**不成立**
+
+| | 前 100 条平均字符长度 |
+|---|---|
+| **正确**选项 | **23.08** |
+| 错误选项 | 22.63 |
+| 差值 | **−0.45**（正确选项反而略长） |
+
+调研报告里"长选项天然更负，所以 `acc` 偏袒短选项"这句话描述的是**机制**（没错），但**不能推出**
+"benchmark 里正确答案更短"。我实测的是正确选项**略长**。
+
+所以正确的表述是：`acc` 对长选项有系统性惩罚；这个惩罚是否有利于"正确答案"完全取决于数据集，
+**不能假设方向**。这正是 `acc_norm` 存在的理由——它把这个与语义无关的因素直接消掉。
+
+### 7.4 ⭐ 连"纯英文"基准都有非 ASCII 字符
+
+扫描 ARC-Easy 全部三个 split（5197 条）：
+
+```
+含非 ASCII 字符的样本: 66 / 5197
+```
+
+| 字符 | 码位 | 次数 | 名称 |
+|---|---|---|---|
+| `°` | U+00B0 | 116 | DEGREE SIGN |
+| `•` | U+2022 | 14 | BULLET |
+| `’` | U+2019 | 8 | RIGHT SINGLE QUOTATION MARK |
+| `º` | U+00BA | 3 | MASCULINE ORDINAL INDICATOR |
+| `ñ` | U+00F1 | 3 | LATIN SMALL LETTER N WITH TILDE |
+| `“` `”` | U+201C/201D | 各 1 | 弯引号 |
+| `™` | U+2122 | 1 | TRADE MARK SIGN |
+| `µ` | U+00B5 | 1 | MICRO SIGN |
+
+样例：`If 1 kg of the compound toluene melts at -95°C, ...`（`train#67`）
+
+**三个后果：**
+
+1. **`acc_norm` 与 `acc_bytes` 在这些样本上不等价**（`°` 是 1 字符 / 2 字节）。前 100 条里有 1 条命中。
+   英文基准上影响极小，**但中文基准上是 3 倍差距**。
+2. **tokenization 受影响**：`°C` 与 `C` 不是同一个 token 序列，`-95°C` 的 token 数可能与预期不同。
+3. **这是 Day 11「编码与脏字符」检查的真实素材**——`src/data_audit.py` 的第 6 类检查（全角/零宽/混用）
+   在这里有了非虚构的命中案例，可以写进报告。
+
+> 复现脚本思路：`load_dataset("allenai/ai2_arc", "ARC-Easy")`（离线用缓存），
+> 对 `question / answerKey / choices.text / choices.label` 逐字符扫 `ord(c) > 127`。
+
+---
+
 ## 待办（Day 4 衔接）
 
 - [ ] 亲手跑 `--num_fewshot 0` / `5` 对照，验证 few-shot 示例是怎么从 `train` split 抽的
