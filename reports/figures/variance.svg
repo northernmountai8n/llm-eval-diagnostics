@@ -1,0 +1,221 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="950" viewBox="0 0 1100 950" role="img">
+<title>Score variation across five few-shot seeds</title>
+<rect width="100%" height="100%" fill="#fff"/>
+<text x="70" y="34" font-family="Arial,sans-serif" font-size="22" font-weight="bold" fill="#14263b">Score variation across five few-shot seeds</text>
+<text x="70" y="55" font-family="Arial,sans-serif" font-size="13" fill="#50647a">Dots: individual seeds; line and bars: mean ± seed standard deviation; each panel has its own y-axis scale</text>
+<text x="85" y="97" font-family="Arial,sans-serif" font-size="15" font-weight="bold" fill="#14263b">arc_easy / acc</text>
+<line x1="85" y1="287.0" x2="495" y2="287.0" stroke="#e4ebf2"/>
+<text x="77" y="291.0" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">0.70</text>
+<line x1="85" y1="244.0" x2="495" y2="244.0" stroke="#e4ebf2"/>
+<text x="77" y="248.0" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">0.74</text>
+<line x1="85" y1="201.0" x2="495" y2="201.0" stroke="#e4ebf2"/>
+<text x="77" y="205.0" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">0.77</text>
+<line x1="85" y1="158.0" x2="495" y2="158.0" stroke="#e4ebf2"/>
+<text x="77" y="162.0" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">0.81</text>
+<line x1="85" y1="115.0" x2="495" y2="115.0" stroke="#e4ebf2"/>
+<text x="77" y="119.0" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">0.85</text>
+<text x="85.0" y="308" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">200</text>
+<circle cx="77.0" cy="206.7" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="81.0" cy="206.7" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="85.0" cy="235.4" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="89.0" cy="201.0" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="93.0" cy="201.0" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<line x1="85.0" y1="195.8" x2="85.0" y2="224.6" stroke="#1e2f43" stroke-width="1.5"/>
+<line x1="80.0" y1="195.8" x2="90.0" y2="195.8" stroke="#1e2f43" stroke-width="1.5"/>
+<line x1="80.0" y1="224.6" x2="90.0" y2="224.6" stroke="#1e2f43" stroke-width="1.5"/>
+<text x="238.8" y="308" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">500</text>
+<circle cx="230.8" cy="179.2" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="234.8" cy="181.5" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="238.8" cy="179.2" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="242.8" cy="172.3" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="246.8" cy="170.0" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<line x1="238.8" y1="171.5" x2="238.8" y2="181.4" stroke="#1e2f43" stroke-width="1.5"/>
+<line x1="233.8" y1="171.5" x2="243.8" y2="171.5" stroke="#1e2f43" stroke-width="1.5"/>
+<line x1="233.8" y1="181.4" x2="243.8" y2="181.4" stroke="#1e2f43" stroke-width="1.5"/>
+<text x="495.0" y="308" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">1000</text>
+<circle cx="487.0" cy="176.9" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="491.0" cy="190.7" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="495.0" cy="178.1" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="499.0" cy="171.2" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="503.0" cy="168.9" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<line x1="495.0" y1="168.7" x2="495.0" y2="185.6" stroke="#1e2f43" stroke-width="1.5"/>
+<line x1="490.0" y1="168.7" x2="500.0" y2="168.7" stroke="#1e2f43" stroke-width="1.5"/>
+<line x1="490.0" y1="185.6" x2="500.0" y2="185.6" stroke="#1e2f43" stroke-width="1.5"/>
+<polyline points="85.0,210.2 238.8,176.5 495.0,177.1" fill="none" stroke="#1e2f43" stroke-width="1.5"/>
+<circle cx="85.0" cy="210.2" r="4.5" fill="#1e2f43"/>
+<circle cx="238.8" cy="176.5" r="4.5" fill="#1e2f43"/>
+<circle cx="495.0" cy="177.1" r="4.5" fill="#1e2f43"/>
+<text x="290.0" y="327" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">Number of test questions</text>
+<text x="620" y="97" font-family="Arial,sans-serif" font-size="15" font-weight="bold" fill="#14263b">arc_easy / acc_norm</text>
+<line x1="620" y1="287.0" x2="1030" y2="287.0" stroke="#e4ebf2"/>
+<text x="612" y="291.0" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">0.70</text>
+<line x1="620" y1="244.0" x2="1030" y2="244.0" stroke="#e4ebf2"/>
+<text x="612" y="248.0" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">0.75</text>
+<line x1="620" y1="201.0" x2="1030" y2="201.0" stroke="#e4ebf2"/>
+<text x="612" y="205.0" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">0.80</text>
+<line x1="620" y1="158.0" x2="1030" y2="158.0" stroke="#e4ebf2"/>
+<text x="612" y="162.0" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">0.85</text>
+<line x1="620" y1="115.0" x2="1030" y2="115.0" stroke="#e4ebf2"/>
+<text x="612" y="119.0" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">0.90</text>
+<text x="620.0" y="308" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">200</text>
+<circle cx="612.0" cy="205.3" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="616.0" cy="222.5" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="620.0" cy="231.1" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="624.0" cy="222.5" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="628.0" cy="205.3" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<line x1="620.0" y1="205.8" x2="620.0" y2="228.9" stroke="#1e2f43" stroke-width="1.5"/>
+<line x1="615.0" y1="205.8" x2="625.0" y2="205.8" stroke="#1e2f43" stroke-width="1.5"/>
+<line x1="615.0" y1="228.9" x2="625.0" y2="228.9" stroke="#1e2f43" stroke-width="1.5"/>
+<text x="773.8" y="308" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">500</text>
+<circle cx="765.8" cy="190.7" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="769.8" cy="201.0" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="773.8" cy="201.0" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="777.8" cy="201.0" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="781.8" cy="190.7" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<line x1="773.8" y1="191.2" x2="773.8" y2="202.5" stroke="#1e2f43" stroke-width="1.5"/>
+<line x1="768.8" y1="191.2" x2="778.8" y2="191.2" stroke="#1e2f43" stroke-width="1.5"/>
+<line x1="768.8" y1="202.5" x2="778.8" y2="202.5" stroke="#1e2f43" stroke-width="1.5"/>
+<text x="1030.0" y="308" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">1000</text>
+<circle cx="1022.0" cy="199.3" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="1026.0" cy="207.0" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="1030.0" cy="205.3" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="1034.0" cy="204.4" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="1038.0" cy="199.3" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<line x1="1030.0" y1="199.5" x2="1030.0" y2="206.6" stroke="#1e2f43" stroke-width="1.5"/>
+<line x1="1025.0" y1="199.5" x2="1035.0" y2="199.5" stroke="#1e2f43" stroke-width="1.5"/>
+<line x1="1025.0" y1="206.6" x2="1035.0" y2="206.6" stroke="#1e2f43" stroke-width="1.5"/>
+<polyline points="620.0,217.3 773.8,196.9 1030.0,203.1" fill="none" stroke="#1e2f43" stroke-width="1.5"/>
+<circle cx="620.0" cy="217.3" r="4.5" fill="#1e2f43"/>
+<circle cx="773.8" cy="196.9" r="4.5" fill="#1e2f43"/>
+<circle cx="1030.0" cy="203.1" r="4.5" fill="#1e2f43"/>
+<text x="825.0" y="327" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">Number of test questions</text>
+<text x="85" y="387" font-family="Arial,sans-serif" font-size="15" font-weight="bold" fill="#14263b">custom_mmlu_all_random5 / acc</text>
+<line x1="85" y1="577.0" x2="495" y2="577.0" stroke="#e4ebf2"/>
+<text x="77" y="581.0" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">0.35</text>
+<line x1="85" y1="534.0" x2="495" y2="534.0" stroke="#e4ebf2"/>
+<text x="77" y="538.0" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">0.42</text>
+<line x1="85" y1="491.0" x2="495" y2="491.0" stroke="#e4ebf2"/>
+<text x="77" y="495.0" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">0.50</text>
+<line x1="85" y1="448.0" x2="495" y2="448.0" stroke="#e4ebf2"/>
+<text x="77" y="452.0" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">0.57</text>
+<line x1="85" y1="405.0" x2="495" y2="405.0" stroke="#e4ebf2"/>
+<text x="77" y="409.0" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">0.65</text>
+<text x="85.0" y="598" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">200</text>
+<circle cx="77.0" cy="534.0" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="81.0" cy="548.3" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="85.0" cy="536.9" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="89.0" cy="531.1" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="93.0" cy="528.3" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<line x1="85.0" y1="528.0" x2="85.0" y2="543.5" stroke="#1e2f43" stroke-width="1.5"/>
+<line x1="80.0" y1="528.0" x2="90.0" y2="528.0" stroke="#1e2f43" stroke-width="1.5"/>
+<line x1="80.0" y1="543.5" x2="90.0" y2="543.5" stroke="#1e2f43" stroke-width="1.5"/>
+<text x="238.8" y="598" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">500</text>
+<circle cx="230.8" cy="448.6" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="234.8" cy="453.2" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="238.8" cy="446.3" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="242.8" cy="447.4" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="246.8" cy="446.3" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<line x1="238.8" y1="445.5" x2="238.8" y2="451.2" stroke="#1e2f43" stroke-width="1.5"/>
+<line x1="233.8" y1="445.5" x2="243.8" y2="445.5" stroke="#1e2f43" stroke-width="1.5"/>
+<line x1="233.8" y1="451.2" x2="243.8" y2="451.2" stroke="#1e2f43" stroke-width="1.5"/>
+<text x="495.0" y="598" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">1000</text>
+<circle cx="487.0" cy="434.8" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="491.0" cy="438.3" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="495.0" cy="431.4" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="499.0" cy="428.5" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="503.0" cy="434.8" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<line x1="495.0" y1="429.8" x2="495.0" y2="437.3" stroke="#1e2f43" stroke-width="1.5"/>
+<line x1="490.0" y1="429.8" x2="500.0" y2="429.8" stroke="#1e2f43" stroke-width="1.5"/>
+<line x1="490.0" y1="437.3" x2="500.0" y2="437.3" stroke="#1e2f43" stroke-width="1.5"/>
+<polyline points="85.0,535.7 238.8,448.3 495.0,433.6" fill="none" stroke="#1e2f43" stroke-width="1.5"/>
+<circle cx="85.0" cy="535.7" r="4.5" fill="#1e2f43"/>
+<circle cx="238.8" cy="448.3" r="4.5" fill="#1e2f43"/>
+<circle cx="495.0" cy="433.6" r="4.5" fill="#1e2f43"/>
+<text x="290.0" y="617" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">Number of test questions</text>
+<text x="85" y="677" font-family="Arial,sans-serif" font-size="15" font-weight="bold" fill="#14263b">hellaswag / acc</text>
+<line x1="85" y1="867.0" x2="495" y2="867.0" stroke="#e4ebf2"/>
+<text x="77" y="871.0" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">0.40</text>
+<line x1="85" y1="824.0" x2="495" y2="824.0" stroke="#e4ebf2"/>
+<text x="77" y="828.0" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">0.45</text>
+<line x1="85" y1="781.0" x2="495" y2="781.0" stroke="#e4ebf2"/>
+<text x="77" y="785.0" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">0.50</text>
+<line x1="85" y1="738.0" x2="495" y2="738.0" stroke="#e4ebf2"/>
+<text x="77" y="742.0" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">0.55</text>
+<line x1="85" y1="695.0" x2="495" y2="695.0" stroke="#e4ebf2"/>
+<text x="77" y="699.0" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">0.60</text>
+<text x="85.0" y="888" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">200</text>
+<circle cx="77.0" cy="768.1" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="81.0" cy="759.5" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="85.0" cy="785.3" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="89.0" cy="772.4" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="93.0" cy="776.7" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<line x1="85.0" y1="762.8" x2="85.0" y2="782.0" stroke="#1e2f43" stroke-width="1.5"/>
+<line x1="80.0" y1="762.8" x2="90.0" y2="762.8" stroke="#1e2f43" stroke-width="1.5"/>
+<line x1="80.0" y1="782.0" x2="90.0" y2="782.0" stroke="#1e2f43" stroke-width="1.5"/>
+<text x="238.8" y="888" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">500</text>
+<circle cx="230.8" cy="791.3" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="234.8" cy="779.3" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="238.8" cy="787.9" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="242.8" cy="781.0" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="246.8" cy="796.5" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<line x1="238.8" y1="780.0" x2="238.8" y2="794.3" stroke="#1e2f43" stroke-width="1.5"/>
+<line x1="233.8" y1="780.0" x2="243.8" y2="780.0" stroke="#1e2f43" stroke-width="1.5"/>
+<line x1="233.8" y1="794.3" x2="243.8" y2="794.3" stroke="#1e2f43" stroke-width="1.5"/>
+<text x="495.0" y="888" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">1000</text>
+<circle cx="487.0" cy="813.7" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="491.0" cy="812.8" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="495.0" cy="817.1" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="499.0" cy="815.4" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="503.0" cy="823.1" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<line x1="495.0" y1="812.3" x2="495.0" y2="820.5" stroke="#1e2f43" stroke-width="1.5"/>
+<line x1="490.0" y1="812.3" x2="500.0" y2="812.3" stroke="#1e2f43" stroke-width="1.5"/>
+<line x1="490.0" y1="820.5" x2="500.0" y2="820.5" stroke="#1e2f43" stroke-width="1.5"/>
+<polyline points="85.0,772.4 238.8,787.2 495.0,816.4" fill="none" stroke="#1e2f43" stroke-width="1.5"/>
+<circle cx="85.0" cy="772.4" r="4.5" fill="#1e2f43"/>
+<circle cx="238.8" cy="787.2" r="4.5" fill="#1e2f43"/>
+<circle cx="495.0" cy="816.4" r="4.5" fill="#1e2f43"/>
+<text x="290.0" y="907" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">Number of test questions</text>
+<text x="620" y="677" font-family="Arial,sans-serif" font-size="15" font-weight="bold" fill="#14263b">hellaswag / acc_norm</text>
+<line x1="620" y1="867.0" x2="1030" y2="867.0" stroke="#e4ebf2"/>
+<text x="612" y="871.0" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">0.50</text>
+<line x1="620" y1="824.0" x2="1030" y2="824.0" stroke="#e4ebf2"/>
+<text x="612" y="828.0" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">0.55</text>
+<line x1="620" y1="781.0" x2="1030" y2="781.0" stroke="#e4ebf2"/>
+<text x="612" y="785.0" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">0.60</text>
+<line x1="620" y1="738.0" x2="1030" y2="738.0" stroke="#e4ebf2"/>
+<text x="612" y="742.0" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">0.65</text>
+<line x1="620" y1="695.0" x2="1030" y2="695.0" stroke="#e4ebf2"/>
+<text x="612" y="699.0" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">0.70</text>
+<text x="620.0" y="888" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">200</text>
+<circle cx="612.0" cy="759.5" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="616.0" cy="750.9" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="620.0" cy="746.6" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="624.0" cy="763.8" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="628.0" cy="755.2" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<line x1="620.0" y1="748.4" x2="620.0" y2="762.0" stroke="#1e2f43" stroke-width="1.5"/>
+<line x1="615.0" y1="748.4" x2="625.0" y2="748.4" stroke="#1e2f43" stroke-width="1.5"/>
+<line x1="615.0" y1="762.0" x2="625.0" y2="762.0" stroke="#1e2f43" stroke-width="1.5"/>
+<text x="773.8" y="888" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">500</text>
+<circle cx="765.8" cy="779.3" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="769.8" cy="774.1" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="773.8" cy="758.6" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="777.8" cy="772.4" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="781.8" cy="779.3" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<line x1="773.8" y1="764.3" x2="773.8" y2="781.2" stroke="#1e2f43" stroke-width="1.5"/>
+<line x1="768.8" y1="764.3" x2="778.8" y2="764.3" stroke="#1e2f43" stroke-width="1.5"/>
+<line x1="768.8" y1="781.2" x2="778.8" y2="781.2" stroke="#1e2f43" stroke-width="1.5"/>
+<text x="1030.0" y="888" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">1000</text>
+<circle cx="1022.0" cy="794.8" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="1026.0" cy="787.0" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="1030.0" cy="779.3" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="1034.0" cy="781.0" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<circle cx="1038.0" cy="793.0" r="3.5" fill="#2b7a9b" opacity=".75"/>
+<line x1="1030.0" y1="780.1" x2="1030.0" y2="794.0" stroke="#1e2f43" stroke-width="1.5"/>
+<line x1="1025.0" y1="780.1" x2="1035.0" y2="780.1" stroke="#1e2f43" stroke-width="1.5"/>
+<line x1="1025.0" y1="794.0" x2="1035.0" y2="794.0" stroke="#1e2f43" stroke-width="1.5"/>
+<polyline points="620.0,755.2 773.8,772.7 1030.0,787.0" fill="none" stroke="#1e2f43" stroke-width="1.5"/>
+<circle cx="620.0" cy="755.2" r="4.5" fill="#1e2f43"/>
+<circle cx="773.8" cy="772.7" r="4.5" fill="#1e2f43"/>
+<circle cx="1030.0" cy="787.0" r="4.5" fill="#1e2f43"/>
+<text x="825.0" y="907" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">Number of test questions</text>
+</svg>

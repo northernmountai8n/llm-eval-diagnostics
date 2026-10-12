@@ -1,0 +1,17 @@
+﻿[
+    {
+        "Id":  "Qwen/Qwen2.5-0.5B",
+        "Tag":  "qwen05",
+        "Sha":  "060db6499f32faf8b98477b0a26969ef7d8b9987"
+    },
+    {
+        "Id":  "Qwen/Qwen2.5-1.5B",
+        "Tag":  "qwen15",
+        "Sha":  "8faed761d45a263340a0528343f099c05c9a4323"
+    },
+    {
+        "Id":  "Qwen/Qwen2.5-3B",
+        "Tag":  "qwen3",
+        "Sha":  "3aab1f1954e9cc14eb9509a215f9e5ca08227a9b"
+    }
+]

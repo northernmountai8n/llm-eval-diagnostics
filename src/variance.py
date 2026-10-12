@@ -1,17 +1,6 @@
-"""
-方差实验分析 —— 项目实验四（⭐ 全项目最有价值的产出）
-================================================
-读取多次重复评测的结果，量化"仅改随机种子时的分数波动"，并与理论标准误对比。
+"""Summarize few-shot seed variation in saved lm-eval runs.
 
-用法:
-    # 1. 结果目录约定：runs/variance/<task>/seed<seed>_limit<limit>/results.json
-    python src/variance.py --root runs/variance --out reports/04_variance.md
-    # 2. 生成图（需要 matplotlib）
-    python src/variance.py --root runs/variance --plot
-
-设计说明:
-    评测分数是一个随机变量，不是确定值。这个脚本的目的就是让这件事可见、可量化。
-    面试时这张图就是你的核心证据。
+Usage: python src/variance.py --root runs/variance --out reports/17-variance.md --plot
 """
 
 from __future__ import annotations
@@ -21,340 +10,258 @@ import json
 import math
 import re
 import statistics
-from collections import defaultdict
+from collections import Counter, defaultdict
 from pathlib import Path
+from xml.sax.saxutils import escape
 
 
-# ---------------------------------------------------------------- 结果解析
+METRICS = ("acc", "acc_norm")
 
-def find_result_files(root: Path) -> list[Path]:
-    """递归找出所有 lm-eval 的结果 JSON。"""
-    return sorted(p for p in root.rglob("*.json") if "results" in p.name or p.name.endswith(".json"))
-
-
-def parse_meta_from_path(path: Path, root: Path) -> dict:
-    """从目录/文件名里解析 task / seed / limit。
-
-    约定目录结构: runs/variance/<task>/seed<seed>_limit<limit>/results.json
-    这个约定由 scripts/run_variance.sh 保证。
-    """
-    rel = path.relative_to(root)
-    parts = rel.parts
-    meta: dict = {"task": None, "seed": None, "limit": None}
-
-    if len(parts) >= 1:
-        meta["task"] = parts[0]
-    blob = str(rel)
-    m = re.search(r"seed[_-]?(\d+)", blob)
-    if m:
-        meta["seed"] = int(m.group(1))
-    m = re.search(r"limit[_-]?(\d+)", blob)
-    if m:
-        meta["limit"] = int(m.group(1))
-    return meta
-
-
-def extract_score(data: dict, task: str | None) -> dict | None:
-    """从 lm-eval 结果 JSON 里取出分数与标准误。
-
-    lm-eval 的结果结构大致是:
-        {"results": {"<task>": {"acc": 0.7, "acc_stderr": 0.02, "acc_norm": ..., ...}}}
-    不同版本字段名略有差异，所以这里做多路兼容 —— 包括顶层直接是 {"<task>": {...}}
-    以及有人用自己的脚本产出的扁平结构。
-    """
-    results = data.get("results")
-    if not isinstance(results, dict) or not results:
-        # 兼容：顶层直接是 {task: {metric: value}} 的自制结果
-        if all(isinstance(v, dict) for v in data.values()) and data:
-            results = data
-        else:
-            return None
-
-    key = task if (task and task in results) else next(iter(results))
-    scores = results[key]
-    if not isinstance(scores, dict):
-        return None
-
-    # 优先 acc_norm（对选项长度归一化），退到 acc
-    for metric in ("acc_norm", "acc", "exact_match", "f1"):
-        if metric in scores and isinstance(scores[metric], (int, float)):
-            return {
-                "task_key": key,
-                "metric": metric,
-                "value": float(scores[metric]),
-                "stderr_reported": _as_float(scores.get(f"{metric}_stderr")),
-                "n_samples": _as_float(scores.get("samples")) or _as_float(scores.get("n_samples")),
-            }
-    return None
-
-
-def _as_float(v) -> float | None:
-    try:
-        return float(v)
-    except (TypeError, ValueError):
-        return None
-
-
-# ---------------------------------------------------------------- 统计
 
 def binom_stderr(p: float, n: int) -> float:
-    """二项分布的标准误：sqrt(p(1-p)/(n-1))（**贝塞尔校正**的样本标准误）。
-
-    ⚠️ 为什么是 n-1 而不是 n —— 2026-09-22 用本机 lm-eval 0.4.13 实测标定：
-
-      指标是 n 个 0/1 结果的均值，其**样本**标准误按定义是 s/sqrt(n)，
-      其中样本标准差 s = sqrt(sum((x-x̄)²)/(n-1))。
-      对 0/1 数据有 sum((x-x̄)²) = n·p(1-p)（p 即样本均值），故
-          s = sqrt(n·p(1-p)/(n-1))   →   SE = s/sqrt(n) = sqrt(p(1-p)/(n-1))
-
-      lm-eval 报的就是这个值。实测对照（Qwen2.5-1.5B / arc_easy, limit=100, acc=0.71）：
-
-          框架报告   0.0456048022
-          /n   公式  0.0453762    差 2.3e-04   ← 偏小，会高估"超额方差"
-          /(n-1) 公式 0.0456048   差 2.1e-17   ← 浮点精确，与框架一致
-
-      两者只差 sqrt(n/(n-1))（n=100 时约 0.5%，n=500 时约 0.1%）。
-      数值影响很小，但本项目全部结论都建立在"口径精确"上，
-      且下游要拿理论值和框架报告值直接比对，所以必须用 n-1 对齐。
-
-    用法：这是"仅由样本量带来的"理论误差下限。
-    如果实测标准差明显高于它，说明还有别的方差来源（seed、few-shot 采样等）。
-    """
-    if n <= 1:  # n=1 时样本方差无定义（除以 n-1 = 0）
-        return float("nan")
-    return math.sqrt(max(p * (1 - p), 0) / (n - 1))
+    """lm-eval's item-level sample standard error for a binary accuracy."""
+    return math.sqrt(p * (1 - p) / (n - 1)) if n > 1 else float("nan")
 
 
-def ci95(mean: float, stderr: float) -> tuple[float, float]:
-    """95% 置信区间（正态近似，1.96σ）。"""
-    return mean - 1.96 * stderr, mean + 1.96 * stderr
+def read_runs(root: Path) -> tuple[dict, set[str]]:
+    """Read one result per (task, limit, metric, seed), verifying duplicates."""
+    grouped = defaultdict(dict)
+    duplicates = set()
+    for path in sorted(root.rglob("results_*.json")):
+        relative = path.relative_to(root)
+        task = relative.parts[0]
+        match = re.fullmatch(r"seed(\d+)_limit(\d+)", relative.parts[1]) if len(relative.parts) > 1 else None
+        if not match:
+            raise ValueError(f"Unexpected result path: {path}")
+        seed, limit = map(int, match.groups())
+        data = json.loads(path.read_text(encoding="utf-8-sig"))
+        config = data["config"]
+        scores = data["results"][task]
+        effective = int(data["n-samples"][task]["effective"])
+        if int(config["fewshot_seed"]) != seed or int(config["limit"]) != limit or effective != limit:
+            raise ValueError(f"Path and result metadata disagree: {path}")
 
-
-# ---------------------------------------------------------------- 主流程
-
-def collect(root: Path) -> dict:
-    """收集所有结果，按 (task, limit) 分组。"""
-    groups: dict[tuple[str, int | None], list[dict]] = defaultdict(list)
-    skipped = 0
-
-    for path in find_result_files(root):
-        meta = parse_meta_from_path(path, root)
-        try:
-            # utf-8-sig 能同时处理带 BOM 和不带 BOM 的文件。
-            # 这不是洁癖：Windows 工具链（PowerShell、记事本、Excel 导出）经常写 BOM，
-            # 而 json.loads 遇到 BOM 会直接失败。中文数据集的编码问题同源。
-            data = json.loads(path.read_text(encoding="utf-8-sig"))
-        except (json.JSONDecodeError, UnicodeDecodeError) as e:
-            skipped += 1
-            print(f"[warn] 解析失败 {path}: {e}")
-            continue
-        score = extract_score(data, meta["task"])
-        if not score:
-            skipped += 1
-            continue
-        score.update({"seed": meta["seed"], "limit": meta["limit"], "path": str(path)})
-        groups[(score["task_key"], meta["limit"])].append(score)
-
-    if skipped:
-        print(f"[warn] 跳过 {skipped} 个无法解析的文件")
-    return groups
-
-
-def analyze(groups: dict) -> dict:
-    """对每个 (task, limit) 组计算统计量。"""
-    out: dict = {}
-    for (task, limit), runs in groups.items():
-        values = [r["value"] for r in runs]
-        if not values:
-            continue
-        mean = statistics.fmean(values)
-        std = statistics.stdev(values) if len(values) > 1 else 0.0
-        n_seed = len(values)
-
-        # 用声明样本量算理论标准误；没有就用 limit 兜底
-        n_samples = next((int(r["n_samples"]) for r in runs if r.get("n_samples")), limit or 0)
-        theo = binom_stderr(mean, n_samples) if n_samples else float("nan")
-
-        # 框架自己报的标准误，取平均作参考
-        reported = [r["stderr_reported"] for r in runs if r.get("stderr_reported")]
-        rep_mean = statistics.fmean(reported) if reported else None
-
-        lo, hi = ci95(mean, std / math.sqrt(n_seed) if n_seed > 1 else std) if std else (mean, mean)
-
-        out[(task, limit)] = {
-            "task": task,
-            "limit": limit,
-            "n_seed": n_seed,
-            "n_samples": n_samples,
-            "metric": runs[0]["metric"],
-            "mean": mean,
-            "std": std,
-            "min": min(values),
-            "max": max(values),
-            "range": max(values) - min(values),
-            "values": values,
-            "seeds": [r["seed"] for r in runs],
-            "theoretical_stderr": theo,
-            "reported_stderr_mean": rep_mean,
-            "ci95_low": lo,
-            "ci95_high": hi,
-        }
-    return out
-
-
-def render(stats: dict, root: Path) -> str:
-    lines = [
-        "# 评测方差分析",
-        "",
-        "> 由 `src/variance.py` 生成。",
-        "",
-        "## 核心问题",
-        "",
-        "同一个模型、同一个 benchmark，**只改随机种子**，分数会变多少？",
-        "如果这个波动大于模型之间的差距，那么榜单上小差距的排名就是不可信的。",
-        "",
-        "## 结果",
-        "",
-        "| task | 样本量 | seed 数 | 均值 | 标准差 | 极差(min~max) | 理论标准误 | 框架报告 stderr |",
-        "|---|---|---|---|---|---|---|---|",
-    ]
-    for key in sorted(stats, key=lambda k: (str(k[0]), k[1] or 0)):
-        s = stats[key]
-        theo = f"{s['theoretical_stderr']:.4f}" if s["theoretical_stderr"] == s["theoretical_stderr"] else "-"
-        rep = f"{s['reported_stderr_mean']:.4f}" if s["reported_stderr_mean"] else "-"
-        lines.append(
-            f"| {s['task']} | {s['limit'] or 'full'} | {s['n_seed']} | "
-            f"{s['mean']:.4f} | {s['std']:.4f} | "
-            f"{s['min']:.4f}~{s['max']:.4f} ({s['range']:.4f}) | {theo} | {rep} |"
+        identity = (
+            config["model"],
+            json.dumps(config["model_args"], sort_keys=True),
+            int(data["n-shot"][task]),
+            int(config["random_seed"]),
+            int(config["numpy_seed"]),
+            int(config["torch_seed"]),
+            config["device"],
+            str(config["batch_size"]),
+            data["lm_eval_version"],
         )
+        for metric in METRICS:
+            value_key = f"{metric},none" if f"{metric},none" in scores else metric
+            stderr_key = f"{metric}_stderr,none" if f"{metric}_stderr,none" in scores else f"{metric}_stderr"
+            if value_key not in scores:
+                continue
+            record = {
+                "value": float(scores[value_key]),
+                "stderr": float(scores[stderr_key]) if scores.get(stderr_key) is not None else None,
+                "identity": identity,
+                "path": str(path),
+            }
+            key = (task, limit, metric)
+            prior = grouped[key].get(seed)
+            if prior is not None:
+                if (prior["value"], prior["stderr"], prior["identity"]) != (
+                    record["value"], record["stderr"], record["identity"]
+                ):
+                    raise ValueError(f"Conflicting results for {key}, seed={seed}: {prior['path']} and {path}")
+                duplicates.add(str(path))
+                continue
+            grouped[key][seed] = record
 
-    lines += ["", "## 逐组明细", ""]
-    for key in sorted(stats, key=lambda k: (str(k[0]), k[1] or 0)):
-        s = stats[key]
-        lines.append(f"### {s['task']} / limit={s['limit']}")
-        lines.append("")
-        lines.append(f"- 指标：`{s['metric']}`，样本量 {s['n_samples']}，重复 {s['n_seed']} 次")
-        lines.append(f"- 各次分数：`{[round(v, 4) for v in s['values']]}`（seed={s['seeds']}）")
-        lines.append(f"- 均值 {s['mean']:.4f}，标准差 {s['std']:.4f}，**极差 {s['range']:.4f}**")
-        if s["theoretical_stderr"] == s["theoretical_stderr"]:
-            ratio = s["std"] / s["theoretical_stderr"] if s["theoretical_stderr"] else float("nan")
-            lines.append(
-                f"- 理论标准误（仅样本量）{s['theoretical_stderr']:.4f}，"
-                f"实测标准差 / 理论 = **{ratio:.2f}×**"
-            )
-            if ratio > 1.2:
-                lines.append(
-                    "  - ⭐ 实测方差高于理论值 → 除样本量外还有额外方差来源"
-                    "（seed 影响 few-shot 示例采样、数据顺序等）"
-                )
-        lines.append("")
+    if not grouped:
+        raise ValueError(f"No results_*.json under {root}")
+    for key, by_seed in grouped.items():
+        identities = {item["identity"] for item in by_seed.values()}
+        if len(identities) != 1:
+            raise ValueError(f"Runs use different model/evaluation settings: {key}")
+    return grouped, duplicates
 
-    lines += [
-        "## 结论怎么用（写进 README 的话术）",
+
+def analyze(grouped: dict) -> dict:
+    stats = {}
+    for key, by_seed in grouped.items():
+        if sorted(by_seed) != [1, 2, 3, 4, 5]:
+            print(f"[skip] Incomplete seed set for {key}: {sorted(by_seed)}")
+            continue
+        seeds = sorted(by_seed)
+        values = [by_seed[seed]["value"] for seed in seeds]
+        stderrs = [by_seed[seed]["stderr"] for seed in seeds if by_seed[seed]["stderr"] is not None]
+        stats[key] = {
+            "seeds": seeds,
+            "values": values,
+            "mean": statistics.fmean(values),
+            "seed_sd": statistics.stdev(values) if len(values) > 1 else float("nan"),
+            "low": min(values),
+            "high": max(values),
+            "range": max(values) - min(values),
+            "item_stderr_mean": statistics.fmean(stderrs) if stderrs else None,
+            "identity": by_seed[seeds[0]]["identity"],
+        }
+    return stats
+
+
+def subject_mix(root: Path, task: str, limit: int) -> str | None:
+    """Describe subjects in the first seed's fixed MMLU test prefix."""
+    folder = root / task / f"seed1_limit{limit}"
+    samples = sorted(folder.rglob(f"samples_{task}_*.jsonl"))
+    if not samples:
+        return None
+    counts = Counter()
+    with samples[-1].open(encoding="utf-8") as handle:
+        for line in handle:
+            row = json.loads(line)
+            counts[row["doc"].get("subject", "unknown")] += 1
+    return "、".join(f"{subject} {count}" for subject, count in counts.items())
+
+
+def render(stats: dict, duplicates: set[str], root: Path) -> str:
+    keys = sorted(stats, key=lambda k: (k[0], k[2], k[1]))
+    first = stats[keys[0]]["identity"]
+    model_args = json.loads(first[1])
+    lines = [
+        "# Day 17｜多任务 few-shot seed 波动",
         "",
-        "```",
-        "在 n=<样本量> 时，同模型同 task 仅改 seed，分数极差达 <极差>。",
-        "这意味着小于该幅度的模型差距在统计上不可区分。",
-        "```",
+        f"- 模型：`{model_args.get('pretrained')}`，revision `{model_args.get('revision')}`，dtype `{model_args.get('dtype')}`。",
+        f"- 任务：{', '.join(sorted({key[0] for key in keys}))}；每个题量使用该任务的前 n 道评测题，5-shot；Python/NumPy/PyTorch seed 固定为 `{first[3]}/{first[4]}/{first[5]}`，只改变 few-shot seed。",
+        f"- `lm-eval` 版本：`{first[8]}`；原始结果：`{root}`。",
+        "- 同一题量内五次使用相同测试题。不同题量的题目集合不同，均值变化不能只归因于题量。",
+        "- `custom_mmlu_all_random5` 是自定义实验：从 `cais/mmlu` 的 `all/validation` 随机选 5 个示例，评估 `all/test`；它与内置 MMLU 的固定 `dev` 示例口径不同，分数不能直接对拍。",
         "",
-        "## 局限",
+        "## 汇总",
         "",
-        "- 重复次数偏少（seed 数较少），方差估计本身的置信区间较宽，",
-        "  因此**定性结论（方差不可忽略）比定量结论（方差具体是多少）更可靠**。",
-        "- 实验在 ~3B 规模模型上完成，未验证更大模型；但方差来源与模型规模无直接关系。",
-        "",
-        f"> 数据源：`{root}`",
+        "| 任务 | 指标 | 题量 | seed 数 | 平均分 | seed 间标准差 | 最低～最高 | 极差 | 单次 stderr 均值 |",
+        "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
-    return "\n".join(lines)
+    for task, limit, metric in keys:
+        s = stats[(task, limit, metric)]
+        stderr = f"{s['item_stderr_mean']:.4f}" if s["item_stderr_mean"] is not None else "—"
+        lines.append(
+            f"| `{task}` | `{metric}` | {limit} | {len(s['seeds'])} | {s['mean']:.4f} | "
+            f"{s['seed_sd']:.4f} | {s['low']:.4f}～{s['high']:.4f} | "
+            f"{s['range']:.4f} | {stderr} |"
+        )
+    lines += ["", "![Five-seed score variation](figures/variance.svg)", "", "各面板为突出 seed 波动分别调整纵轴范围；跨任务比较请看上表的数值。", "", "## 观察", ""]
+    for task in sorted({key[0] for key in keys}):
+        for metric in METRICS:
+            metric_keys = sorted((key for key in keys if key[0] == task and key[2] == metric), key=lambda key: key[1])
+            if not metric_keys:
+                continue
+            items = [f"n={limit}: {stats[(task, limit, metric)]['seed_sd'] * 100:.2f} 个百分点" for _, limit, _ in metric_keys]
+            sds = [stats[key]["seed_sd"] for key in metric_keys]
+            if len(sds) < 2:
+                trend = "只有一个题量，暂不判断趋势"
+            else:
+                trend = "这几组观测值依次下降" if all(a > b for a, b in zip(sds, sds[1:])) else "这几组观测值并未依次下降"
+            lines.append(f"- `{task}` / `{metric}` 的 seed 间标准差：{'；'.join(items)}；{trend}。")
+    mmlu_task = "custom_mmlu_all_random5"
+    mmlu_limits = sorted(limit for task, limit, metric in keys if task == mmlu_task and metric == "acc")
+    if mmlu_limits:
+        lines += ["", "## MMLU 测试题学科构成", ""]
+        for limit in mmlu_limits:
+            mix = subject_mix(root, mmlu_task, limit)
+            if mix:
+                lines.append(f"- n={limit}：{mix}。")
+        lines += [
+            "",
+            "MMLU 的 `all/test` 前缀按学科聚集；扩大 `--limit` 会加入新学科。三档平均分变化同时反映题目构成变化，不能解释成题量本身提高了模型能力。",
+        ]
+    lines += ["", "## 每个 seed 的原始分数", ""]
+    for task, limit, metric in keys:
+        s = stats[(task, limit, metric)]
+        pairs = "、".join(f"{seed}: {value:.4f}" for seed, value in zip(s["seeds"], s["values"]))
+        lines.append(f"- `{task}` / `{metric}` / n={limit}：{pairs}。")
+    lines += [
+        "",
+        "## 如何解释",
+        "",
+        "- `seed 间标准差`描述固定题目和推理配置时，更换 5-shot 示例带来的五次分数波动；只有 5 个 seed，估计仍较粗。",
+        "- `单次 stderr`由每次运行的逐题 0/1 正误估计，描述题目层面的标准误。两者对应不同的变化来源，不能直接相除来证明“额外方差”。",
+        "- 200、500、1000 题采用测试集前缀，不能据此推断随机抽题时分数会如何波动。若要估计抽题不确定性，需要单独做随机抽样或逐题 bootstrap。",
+        "- 某个题量下观察到的最高与最低分数差，也不能直接当作两个模型分数差异显著性的门槛；比较模型需要相同题目和逐题配对分析。",
+        "- 本实验使用 `--limit`，结果只代表各任务选定的前 n 道题，不是完整 benchmark 分数。",
+    ]
+    if duplicates:
+        lines += ["", f"重复结果文件：{len(duplicates)} 份；相同 seed 的配置和分数一致，汇总时只计一次。"]
+    return "\n".join(lines) + "\n"
 
 
 def plot(stats: dict, out: Path) -> None:
-    """画方差图 —— 面试时这张图最有说服力。"""
-    try:
-        import matplotlib
-        matplotlib.use("Agg")
-        import matplotlib.pyplot as plt
-    except ImportError:
-        print("[skip] 未安装 matplotlib，跳过绘图：pip install matplotlib")
-        return
-
-    tasks = sorted({s["task"] for s in stats.values()})
-    if not tasks:
-        print("[skip] 无数据可画")
-        return
-
-    fig, axes = plt.subplots(1, len(tasks), figsize=(5 * len(tasks), 4.2), squeeze=False)
-    for ax, task in zip(axes[0], tasks):
-        rows = sorted(
-            (s for s in stats.values() if s["task"] == task),
-            key=lambda s: s["limit"] or 0,
-        )
-        xs = [s["limit"] or 0 for s in rows]
-        means = [s["mean"] for s in rows]
-        stds = [s["std"] for s in rows]
-
-        # 每个 seed 的实际分数（散点）—— 让"波动"肉眼可见
-        for x, s in zip(xs, rows):
-            ax.scatter([x] * len(s["values"]), s["values"], alpha=0.65, s=28, zorder=3)
-
-        ax.errorbar(xs, means, yerr=stds, marker="o", capsize=5,
-                    linewidth=1.8, color="black", zorder=4, label="mean ± 1σ")
-        ax.set_title(task)
-        ax.set_xlabel("num samples (--limit)")
-        ax.set_ylabel("score")
-        ax.grid(alpha=0.3)
-
-        # 标注极差，直接把结论写在图上
-        for x, s in zip(xs, rows):
-            ax.annotate(f"range {s['range']:.3f}", (x, s["max"]),
-                        textcoords="offset points", xytext=(0, 8),
-                        ha="center", fontsize=8)
-
-    axes[0][0].legend(fontsize=8)
-    fig.suptitle("Score variation across seeds (same model, same task)", fontsize=11)
-    fig.tight_layout()
+    tasks = sorted({task for task, _, _ in stats})
+    width, height = 1100, 80 + len(tasks) * 290
+    parts = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" role="img">',
+        '<title>Score variation across five few-shot seeds</title>',
+        '<rect width="100%" height="100%" fill="#fff"/>',
+        '<text x="70" y="34" font-family="Arial,sans-serif" font-size="22" font-weight="bold" fill="#14263b">Score variation across five few-shot seeds</text>',
+        '<text x="70" y="55" font-family="Arial,sans-serif" font-size="13" fill="#50647a">Dots: individual seeds; line and bars: mean ± seed standard deviation; each panel has its own y-axis scale</text>',
+    ]
+    for row, task in enumerate(tasks):
+        for col, metric in enumerate(METRICS):
+            sizes = sorted(limit for t, limit, m in stats if t == task and m == metric)
+            if not sizes:
+                continue
+            left, top, chart_w, chart_h = 85 + col * 535, 115 + row * 290, 410, 172
+            bottom = top + chart_h
+            all_values = [v for limit in sizes for v in stats[(task, limit, metric)]["values"]]
+            low = max(0.0, math.floor((min(all_values) - 0.04) * 20) / 20)
+            high = min(1.0, math.ceil((max(all_values) + 0.04) * 20) / 20)
+            if high <= low:
+                high = min(1.0, low + 0.05)
+            min_size, max_size = min(sizes), max(sizes)
+            x_at = lambda limit: left + (limit - min_size) / (max_size - min_size) * chart_w if max_size > min_size else left + chart_w / 2
+            y_at = lambda value: bottom - (value - low) / (high - low) * chart_h
+            parts.append(f'<text x="{left}" y="{top - 18}" font-family="Arial,sans-serif" font-size="15" font-weight="bold" fill="#14263b">{escape(task)} / {metric}</text>')
+            for i in range(5):
+                value = low + (high - low) * i / 4
+                y = y_at(value)
+                parts.append(f'<line x1="{left}" y1="{y:.1f}" x2="{left + chart_w}" y2="{y:.1f}" stroke="#e4ebf2"/>')
+                parts.append(f'<text x="{left - 8}" y="{y + 4:.1f}" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">{value:.2f}</text>')
+            for limit in sizes:
+                x = x_at(limit)
+                parts.append(f'<text x="{x:.1f}" y="{bottom + 21}" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">{limit}</text>')
+                s = stats[(task, limit, metric)]
+                for index, value in enumerate(s["values"]):
+                    dot_x = x + (index - 2) * 4
+                    parts.append(f'<circle cx="{dot_x:.1f}" cy="{y_at(value):.1f}" r="3.5" fill="#2b7a9b" opacity=".75"/>')
+                upper, lower = y_at(s["mean"] + s["seed_sd"]), y_at(s["mean"] - s["seed_sd"])
+                parts.append(f'<line x1="{x:.1f}" y1="{upper:.1f}" x2="{x:.1f}" y2="{lower:.1f}" stroke="#1e2f43" stroke-width="1.5"/>')
+                for cap_y in (upper, lower):
+                    parts.append(f'<line x1="{x - 5:.1f}" y1="{cap_y:.1f}" x2="{x + 5:.1f}" y2="{cap_y:.1f}" stroke="#1e2f43" stroke-width="1.5"/>')
+            points = " ".join(f'{x_at(limit):.1f},{y_at(stats[(task, limit, metric)]["mean"]):.1f}' for limit in sizes)
+            parts.append(f'<polyline points="{points}" fill="none" stroke="#1e2f43" stroke-width="1.5"/>')
+            for limit in sizes:
+                s = stats[(task, limit, metric)]
+                parts.append(f'<circle cx="{x_at(limit):.1f}" cy="{y_at(s["mean"]):.1f}" r="4.5" fill="#1e2f43"/>')
+            parts.append(f'<text x="{left + chart_w / 2:.1f}" y="{bottom + 40}" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#5c6d80">Number of test questions</text>')
+    parts.append('</svg>')
     out.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(out, dpi=160)
-    print(f"[ok] 已保存图 {out}")
+    out.write_text("\n".join(parts), encoding="utf-8")
 
 
 def main() -> None:
-    p = argparse.ArgumentParser(description="评测方差分析")
-    p.add_argument("--root", default="runs/variance", help="结果目录")
-    p.add_argument("--out", default="reports/04_variance.md")
-    p.add_argument("--plot", action="store_true", help="生成方差图")
-    p.add_argument("--plot-out", default="reports/figures/variance.png")
-    args = p.parse_args()
+    parser = argparse.ArgumentParser(description="Summarize few-shot seed variation")
+    parser.add_argument("--root", type=Path, default=Path("runs/variance"))
+    parser.add_argument("--out", type=Path, default=Path("reports/17-variance.md"))
+    parser.add_argument("--plot", action="store_true")
+    parser.add_argument("--plot-out", type=Path, default=Path("reports/figures/variance.svg"))
+    args = parser.parse_args()
 
-    root = Path(args.root)
-    if not root.exists():
-        raise SystemExit(
-            f"目录不存在：{root}\n"
-            "请先运行方差实验，目录约定：runs/variance/<task>/seed<seed>_limit<limit>/"
-        )
-
-    groups = collect(root)
-    if not groups:
-        raise SystemExit(f"在 {root} 下没找到可解析的结果 JSON。检查目录结构是否符合约定。")
-
-    stats = analyze(groups)
-    report = render(stats, root)
-    out = Path(args.out)
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(report, encoding="utf-8")
-    print(f"[ok] 已生成 {out}")
-
-    # 终端速览
-    print()
-    print(f"{'task':<14}{'limit':>7}{'seeds':>7}{'mean':>9}{'std':>9}{'range':>9}")
-    for s in sorted(stats.values(), key=lambda s: (s["task"], s["limit"] or 0)):
-        print(
-            f"{s['task']:<14}{s['limit'] or 0:>7}{s['n_seed']:>7}"
-            f"{s['mean']:>9.4f}{s['std']:>9.4f}{s['range']:>9.4f}"
-        )
-
+    grouped, duplicates = read_runs(args.root)
+    stats = analyze(grouped)
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(render(stats, duplicates, args.root), encoding="utf-8")
+    for (task, limit, metric), s in sorted(stats.items()):
+        print(f"{task} n={limit} {metric}: mean={s['mean']:.4f}, seed_sd={s['seed_sd']:.4f}, range={s['range']:.4f}")
+    print(f"Report: {args.out}; duplicate result files ignored: {len(duplicates)}")
     if args.plot:
-        plot(stats, Path(args.plot_out))
+        plot(stats, args.plot_out)
+        print(f"Figure: {args.plot_out}")
 
 
 if __name__ == "__main__":

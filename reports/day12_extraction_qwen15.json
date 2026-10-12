@@ -1,0 +1,50 @@
+{
+  "source": "runs\\day06_qwen15_gsm8k_s5_n200\\Qwen__Qwen2.5-1.5B\\samples_gsm8k_2026-09-28T10-31-12.587461.jsonl",
+  "questions": 200,
+  "strict_failed": 2,
+  "strict_failure_rate": 0.01,
+  "flexible_failed": 0,
+  "strict_correct": 124,
+  "flexible_correct": 124,
+  "score_delta_percentage_points": 0.0,
+  "strict_failed_examples": [
+    {
+      "doc_id": 85,
+      "gold": "44",
+      "strict": "[invalid]",
+      "flexible": "1",
+      "strict_correct": false,
+      "flexible_correct": false,
+      "response_tail": "11=44>>44 blocks.\nHe has been on 4 vacations a year for 11 years and is now 34 so he has 4 * 11 = <<4*11=44>>44 blocks.\nHe has been on 4 vacations a year for 11 years and is now 34 so he has 4 * 11 = <<4*11=44>>44 blocks.\nHe has been on 4 vacations a year for 11 years and is now 34 so he has 4 * 11 = <<4*11=44>>44 blocks.\nHe has been on 4 vacations a year for 11 years and is now 34 so he has 4 * 1"
+    },
+    {
+      "doc_id": 186,
+      "gold": "5",
+      "strict": "[invalid]",
+      "flexible": "160",
+      "strict_correct": false,
+      "flexible_correct": false,
+      "response_tail": "straw used for the rats is 160 pieces of straw.\nThe total number of pieces of straw used for the rats is 160 pieces of straw.\nThe total number of pieces of straw used for the rats is 160 pieces of straw.\nThe total number of pieces of straw used for the rats is 160 pieces of straw.\nThe total number of pieces of straw used for the rats is 160 pieces of straw.\nThe total number of pieces of straw used"
+    }
+  ],
+  "different_extractions": [
+    {
+      "doc_id": 85,
+      "gold": "44",
+      "strict": "[invalid]",
+      "flexible": "1",
+      "strict_correct": false,
+      "flexible_correct": false,
+      "response_tail": "11=44>>44 blocks.\nHe has been on 4 vacations a year for 11 years and is now 34 so he has 4 * 11 = <<4*11=44>>44 blocks.\nHe has been on 4 vacations a year for 11 years and is now 34 so he has 4 * 11 = <<4*11=44>>44 blocks.\nHe has been on 4 vacations a year for 11 years and is now 34 so he has 4 * 11 = <<4*11=44>>44 blocks.\nHe has been on 4 vacations a year for 11 years and is now 34 so he has 4 * 1"
+    },
+    {
+      "doc_id": 186,
+      "gold": "5",
+      "strict": "[invalid]",
+      "flexible": "160",
+      "strict_correct": false,
+      "flexible_correct": false,
+      "response_tail": "straw used for the rats is 160 pieces of straw.\nThe total number of pieces of straw used for the rats is 160 pieces of straw.\nThe total number of pieces of straw used for the rats is 160 pieces of straw.\nThe total number of pieces of straw used for the rats is 160 pieces of straw.\nThe total number of pieces of straw used for the rats is 160 pieces of straw.\nThe total number of pieces of straw used"
+    }
+  ]
+}

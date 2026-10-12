@@ -1,7 +1,7 @@
 """
 benchmark 数据质检脚本 —— 项目实验一
 ================================================
-对 benchmark 数据集执行 6 类质量检查，输出带样本示例的报告。
+对 benchmark 数据集执行 7 类质量检查，输出带样本示例的报告。
 
 用法:
     python src/data_audit.py --dataset ceval/ceval-exam --config high_school_physics
@@ -38,7 +38,7 @@ QUESTION_KEYS = ("question", "input", "prompt", "text")
 SHINGLE_SIZE = 5
 # 近重复判定阈值（Jaccard 相似度）
 NEAR_DUP_THRESHOLD = 0.8
-# 长度异常的分位点
+# 长度分布的摘要分位点
 LOW_Q, HIGH_Q = 0.01, 0.99
 
 
@@ -113,26 +113,34 @@ def get_choices(row: dict[str, Any]) -> list[str]:
 
 
 def get_answer(row: dict[str, Any]) -> str:
-    """取答案字段。"""
+    """统一返回选项字母；MMLU 的整数答案是从 0 开始的下标。"""
     for key in ANSWER_KEYS:
         val = row.get(key)
-        if val is not None and str(val).strip():
-            return str(val).strip()
+        if val is None or not str(val).strip():
+            continue
+        if isinstance(val, int) and not isinstance(val, bool):
+            choices = get_choices(row)
+            if 0 <= val < len(choices) and val < len(CHOICE_KEYS):
+                return CHOICE_KEYS[val]
+        return str(val).strip()
     return ""
 
 
-# ---------------------------------------------------------------- 六类检查
+# ---------------------------------------------------------------- 七类检查
 
 def check_exact_duplicates(rows: list[dict]) -> dict:
     """检查 1: 完全重复。
 
-    为什么重要：重复样本会变相加权某个知识点，让分数偏向该知识点的表现。
+    题干、全部选项与答案都相同才算完全重复。重复样本会变相加权某个知识点。
     """
     seen: dict[str, int] = {}
     dup_groups: dict[str, list[int]] = {}
     for i, row in enumerate(rows):
         key = hashlib.md5(
-            (normalize(get_question(row)) + "||" + normalize(get_answer(row))).encode()
+            json.dumps(
+                [get_question(row), get_choices(row), get_answer(row)],
+                ensure_ascii=False,
+            ).encode("utf-8")
         ).hexdigest()
         if key in seen:
             dup_groups.setdefault(key, [seen[key]]).append(i)
@@ -175,7 +183,12 @@ def check_near_duplicates(rows: list[dict], cap: int = 3000) -> dict:
                     {
                         "indices": [ia, ib],
                         "similarity": round(sim, 3),
-                        "question": get_question(rows[ia])[:100],
+                        "question_a": get_question(rows[ia]),
+                        "question_b": get_question(rows[ib]),
+                        "choices_a": get_choices(rows[ia]),
+                        "choices_b": get_choices(rows[ib]),
+                        "answer_a": get_answer(rows[ia]),
+                        "answer_b": get_answer(rows[ib]),
                     }
                 )
     return {
@@ -184,14 +197,52 @@ def check_near_duplicates(rows: list[dict], cap: int = 3000) -> dict:
         "scanned": min(cap, len(rows)),
         "truncated": len(rows) > cap,
         "examples": pairs[:5],
-        "impact": "与完全重复同源，但更隐蔽",
+        "candidates": pairs,
+        "impact": "题干相似的候选题对；需结合选项和答案人工核对",
+    }
+
+
+def check_missing_fields(rows: list[dict]) -> dict:
+    """检查 3: 空题干、空答案和缺失选项；当前审计均为四选题。"""
+    issues: list[dict] = []
+    for i, row in enumerate(rows):
+        problems: list[str] = []
+        if not get_question(row).strip():
+            problems.append("空题干")
+
+        if isinstance(row.get("choices"), (list, tuple)):
+            raw_choices = row["choices"]
+        else:
+            raw_choices = [row.get(key) for key in "ABCD"]
+        if len(raw_choices) != 4 or any(
+            not isinstance(choice, str) or not choice.strip()
+            for choice in raw_choices
+        ):
+            problems.append("缺失或空选项")
+
+        if not get_answer(row):
+            problems.append("空答案")
+        if problems:
+            issues.append({
+                "index": i,
+                "problems": problems,
+                "question": get_question(row)[:80],
+            })
+
+    breakdown = Counter(problem for item in issues for problem in item["problems"])
+    return {
+        "name": "缺失或空字段",
+        "count": len(issues),
+        "breakdown": dict(breakdown),
+        "examples": issues[:5],
+        "impact": "题目无法可靠展示或判分",
     }
 
 
 def check_answer_validity(rows: list[dict]) -> dict:
-    """检查 3: 答案合法性（越界 / 格式不一致）。
+    """检查 4: 答案合法性（越界 / 格式不一致）。
 
-    为什么重要：这是唯一一类会"直接导致判分错误"的问题。
+    答案越界或格式异常会直接导致判分错误。
     答案字段是 'C' 但只有 3 个选项、或者答案是 'C.' 带标点，
     都会让判分逻辑失效。
     """
@@ -222,7 +273,7 @@ def check_answer_validity(rows: list[dict]) -> dict:
 
 
 def check_position_bias(rows: list[dict]) -> dict:
-    """检查 4: 选项位置偏置。
+    """检查 5: 选项位置偏置。
 
     为什么重要：若正确答案系统性集中在某个位置，模型可能"学会猜位置"
     而非"学会知识"，分数会被高估。这是 benchmark 构建质量的直接指标。
@@ -246,15 +297,14 @@ def check_position_bias(rows: list[dict]) -> dict:
         "distribution": dist,
         "expected_uniform_pct": round(expected, 1),
         "examples": [{"position": k, "pct": v} for k, v in suspicious.items()],
-        "impact": "正确答案集中 → 模型可能靠猜位置而非知识得分（虚高）",
+        "impact": "仅提示分布偏离；需结合样本量判断，不能据此认定系统性偏置",
     }
 
 
 def check_length_anomalies(rows: list[dict]) -> dict:
-    """检查 5: 长度异常。
+    """检查 6: 长度异常。
 
-    为什么重要：超长样本可能被 tokenizer 截断，造成"静默错误"——
-    模型不报错、评测不报错，但模型看到的是被切掉的题。
+    用 IQR 标记相对长度离群题；字符数本身不能证明模型输入被截断。
     """
     q_lens = [len(get_question(r)) for r in rows]
     c_lens = [
@@ -262,7 +312,9 @@ def check_length_anomalies(rows: list[dict]) -> dict:
     ]
     if not q_lens:
         return {"name": "长度异常", "count": 0, "examples": [], "impact": "无题干"}
-    lo, hi = quantile(q_lens, LOW_Q), quantile(q_lens, HIGH_Q)
+    q1, q3 = quantile(q_lens, 0.25), quantile(q_lens, 0.75)
+    iqr = q3 - q1
+    lo, hi = max(0.0, q1 - 1.5 * iqr), q3 + 1.5 * iqr
     long_ones = [
         {"index": i, "length": len(get_question(r)), "preview": get_question(r)[:80]}
         for i, r in enumerate(rows)
@@ -271,7 +323,7 @@ def check_length_anomalies(rows: list[dict]) -> dict:
     short_ones = [
         {"index": i, "length": len(get_question(r)), "preview": get_question(r)[:80]}
         for i, r in enumerate(rows)
-        if len(get_question(r)) < lo
+        if 0 < len(get_question(r)) < lo
     ]
     # 选项长度差异 → 会放大 acc 与 acc_norm 的差距
     mean_c = sum(c_lens) / len(c_lens) if c_lens else 0
@@ -280,20 +332,25 @@ def check_length_anomalies(rows: list[dict]) -> dict:
         "count": len(long_ones) + len(short_ones),
         "question_len": {
             "min": min(q_lens),
-            "p01": lo,
+            "p01": quantile(q_lens, LOW_Q),
             "median": quantile(q_lens, 0.5),
-            "p99": hi,
+            "p99": quantile(q_lens, HIGH_Q),
             "max": max(q_lens),
             "mean": round(sum(q_lens) / len(q_lens), 1),
         },
+        "outlier_rule": {
+            "method": "1.5 × IQR（题干字符数）",
+            "lower": round(lo, 1),
+            "upper": round(hi, 1),
+        },
         "choice_len_mean": round(mean_c, 1),
         "examples": (long_ones[:3] + short_ones[:3]),
-        "impact": "超长样本可能被截断（静默错误）；选项长度差异会放大 acc 与 acc_norm 的分歧",
+        "impact": "相对长度离群，需人工复核；不能据此断言输入被截断",
     }
 
 
 def check_encoding(rows: list[dict]) -> dict:
-    """检查 6: 编码与脏字符。
+    """检查 7: 编码与脏字符。
 
     为什么重要：中文 benchmark 高频问题。多余空白、不可见字符、
     全半角混用都会影响 prompt 拼装，进而影响分数。
@@ -308,8 +365,9 @@ def check_encoding(rows: list[dict]) -> dict:
             problems.append("零宽/不可见字符")
         if re.search(r"[ \t]{2,}", text):
             problems.append("连续空白")
-        if re.search(r"[\uff01-\uff5e]", text) and re.search(r"[!-~]", text):
-            problems.append("全半角混用")
+        # 中文全角标点与半角英文/数字并存是正常写法，只检查字母或数字本身。
+        if re.search(r"[\uff10-\uff19\uff21-\uff3a\uff41-\uff5a]", text) and re.search(r"[A-Za-z0-9]", text):
+            problems.append("全半角字母/数字混用")
         if problems:
             issues.append({"index": i, "problems": problems})
     summary = Counter(p for it in issues for p in it["problems"])
@@ -318,7 +376,7 @@ def check_encoding(rows: list[dict]) -> dict:
         "count": len(issues),
         "breakdown": dict(summary),
         "examples": issues[:5],
-        "impact": "影响 prompt 拼装，可能改变 tokenization 与分数",
+        "impact": "可能改变 prompt 与 tokenization；需逐例判断是否为问题",
     }
 
 
@@ -328,6 +386,7 @@ def audit(rows: list[dict], name: str) -> dict:
     checks = [
         check_exact_duplicates(rows),
         check_near_duplicates(rows),
+        check_missing_fields(rows),
         check_answer_validity(rows),
         check_position_bias(rows),
         check_length_anomalies(rows),
@@ -343,7 +402,7 @@ def render_markdown(result: dict) -> str:
         "",
         f"- 样本数：**{result['n_samples']}**",
         "",
-        "| 检查项 | 问题数 | 影响 |",
+        "| 检查项 | 计数 | 含义与影响 |",
         "|---|---|---|",
     ]
     for c in result["checks"]:
@@ -357,18 +416,20 @@ def render_markdown(result: dict) -> str:
             lines.append(f"分布：`{c['distribution']}`（均匀应为 {c.get('expected_uniform_pct')}%）")
         if c["name"] == "长度异常" and c.get("question_len"):
             lines.append(f"题干长度：`{c['question_len']}`")
-        if c["name"] == "编码与脏字符" and c.get("breakdown"):
+            lines.append(f"离群阈值：`{c['outlier_rule']}`")
+        if c.get("breakdown"):
             lines.append(f"分类：`{c['breakdown']}`")
         if c.get("examples"):
             lines.append("")
             lines.append("例子：")
             lines.append("```json")
-            lines.append(json.dumps(c["examples"], ensure_ascii=False, indent=2)[:1500])
+            lines.append(json.dumps(c["examples"], ensure_ascii=False, indent=2))
             lines.append("```")
         lines.append("")
     lines.append("---")
     lines.append("")
     lines.append("> 说明：本报告只量化问题，不做修改。")
+    lines.append("> 近重复计数是候选题对数；选项位置偏置计数是超出启发式阈值的位置数。各项计数不可相加。")
     lines.append("> 判断某类问题是否需要修复，取决于它的规模是否足以影响结论。")
     return "\n".join(lines)
 

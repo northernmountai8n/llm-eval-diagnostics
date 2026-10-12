@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="490" viewBox="0 0 820 490" role="img">
+<title>Qwen2.5 MMLU accuracy by category and model size</title>
+<desc>Three base model sizes on the same 570 MMLU questions, five-shot. Each subject contributes its first ten test questions.</desc>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="76" y="31" font-family="Arial,sans-serif" font-size="19" font-weight="bold" fill="#182334">MMLU by category and model size</text>
+<text x="76" y="53" font-family="Arial,sans-serif" font-size="12" fill="#546174">Same 570 questions; 5-shot; accuracy (%)</text>
+<line x1="76" y1="382.0" x2="790" y2="382.0" stroke="#e4e8ee"/>
+<text x="64" y="386.0" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#657184">0</text>
+<line x1="76" y1="322.0" x2="790" y2="322.0" stroke="#e4e8ee"/>
+<text x="64" y="326.0" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#657184">20</text>
+<line x1="76" y1="262.0" x2="790" y2="262.0" stroke="#e4e8ee"/>
+<text x="64" y="266.0" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#657184">40</text>
+<line x1="76" y1="202.0" x2="790" y2="202.0" stroke="#e4e8ee"/>
+<text x="64" y="206.0" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#657184">60</text>
+<line x1="76" y1="142.0" x2="790" y2="142.0" stroke="#e4e8ee"/>
+<text x="64" y="146.0" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#657184">80</text>
+<line x1="76" y1="82.0" x2="790" y2="82.0" stroke="#e4e8ee"/>
+<text x="64" y="86.0" text-anchor="end" font-family="Arial,sans-serif" font-size="11" fill="#657184">100</text>
+<rect x="118" y="246.2" width="29" height="135.8" fill="#6D94CF"/>
+<text x="132.5" y="240.2" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#263449">45.3</text>
+<rect x="152" y="209.9" width="29" height="172.1" fill="#EFAB61"/>
+<text x="166.5" y="203.9" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#263449">57.4</text>
+<rect x="186" y="176.7" width="29" height="205.3" fill="#4EAD91"/>
+<text x="200.5" y="170.7" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#263449">68.4</text>
+<text x="165" y="403" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#182334">STEM</text>
+<text x="165" y="419" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#657184">n=190</text>
+<rect x="295" y="227.4" width="29" height="154.6" fill="#6D94CF"/>
+<text x="309.5" y="221.4" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#263449">51.5</text>
+<rect x="329" y="169.7" width="29" height="212.3" fill="#EFAB61"/>
+<text x="343.5" y="163.7" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#263449">70.8</text>
+<rect x="363" y="160.5" width="29" height="221.5" fill="#4EAD91"/>
+<text x="377.5" y="154.5" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#263449">73.8</text>
+<text x="342" y="403" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#182334">Humanities</text>
+<text x="342" y="419" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#657184">n=130</text>
+<rect x="472" y="209.5" width="29" height="172.5" fill="#6D94CF"/>
+<text x="486.5" y="203.5" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#263449">57.5</text>
+<rect x="506" y="169.5" width="29" height="212.5" fill="#EFAB61"/>
+<text x="520.5" y="163.5" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#263449">70.8</text>
+<rect x="540" y="169.5" width="29" height="212.5" fill="#4EAD91"/>
+<text x="554.5" y="163.5" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#263449">70.8</text>
+<text x="519" y="403" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#182334">Social sciences</text>
+<text x="519" y="419" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#657184">n=120</text>
+<rect x="649" y="248.2" width="29" height="133.8" fill="#6D94CF"/>
+<text x="663.5" y="242.2" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#263449">44.6</text>
+<rect x="683" y="174.3" width="29" height="207.7" fill="#EFAB61"/>
+<text x="697.5" y="168.3" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#263449">69.2</text>
+<rect x="717" y="169.7" width="29" height="212.3" fill="#4EAD91"/>
+<text x="731.5" y="163.7" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#263449">70.8</text>
+<text x="696" y="403" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#182334">Other</text>
+<text x="696" y="419" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#657184">n=130</text>
+<rect x="310" y="446" width="15" height="12" fill="#6D94CF"/>
+<text x="331" y="457" font-family="Arial,sans-serif" font-size="12" fill="#263449">0.5B</text>
+<rect x="400" y="446" width="15" height="12" fill="#EFAB61"/>
+<text x="421" y="457" font-family="Arial,sans-serif" font-size="12" fill="#263449">1.5B</text>
+<rect x="490" y="446" width="15" height="12" fill="#4EAD91"/>
+<text x="511" y="457" font-family="Arial,sans-serif" font-size="12" fill="#263449">3B</text>
+</svg>

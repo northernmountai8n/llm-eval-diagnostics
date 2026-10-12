@@ -1,0 +1,107 @@
+{
+  "baseline_samples": "runs\\day06_qwen15_gsm8k_s5_n200\\Qwen__Qwen2.5-1.5B\\samples_gsm8k_2026-09-28T10-31-12.587461.jsonl",
+  "variant_samples": "runs\\day12_gsm8k_prompt_1p5b_s5_n200\\Qwen__Qwen2.5-1.5B\\samples_day12_gsm8k_prompt_2026-10-04T22-53-51.581513.jsonl",
+  "questions": 200,
+  "controlled_variables_verified": true,
+  "prompt_change": {
+    "from": "Answer:",
+    "to": "Answer: Let's think step by step."
+  },
+  "filters": {
+    "strict-match": {
+      "baseline_correct": 124,
+      "variant_correct": 117,
+      "delta_percentage_points": -3.5,
+      "improved_ids": [
+        9,
+        32,
+        37,
+        58,
+        68,
+        89,
+        92,
+        109,
+        118,
+        139,
+        192,
+        193
+      ],
+      "worsened_ids": [
+        13,
+        24,
+        27,
+        31,
+        38,
+        43,
+        44,
+        53,
+        54,
+        70,
+        82,
+        115,
+        129,
+        132,
+        135,
+        141,
+        145,
+        148,
+        169
+      ],
+      "both_correct_count": 105,
+      "both_wrong_count": 64,
+      "baseline_extraction_failed_ids": [
+        85,
+        186
+      ],
+      "variant_extraction_failed_ids": [
+        5,
+        102,
+        162
+      ]
+    },
+    "flexible-extract": {
+      "baseline_correct": 124,
+      "variant_correct": 117,
+      "delta_percentage_points": -3.5,
+      "improved_ids": [
+        9,
+        32,
+        37,
+        58,
+        68,
+        89,
+        92,
+        109,
+        118,
+        139,
+        192,
+        193
+      ],
+      "worsened_ids": [
+        13,
+        24,
+        27,
+        31,
+        38,
+        43,
+        44,
+        53,
+        54,
+        70,
+        82,
+        115,
+        129,
+        132,
+        135,
+        141,
+        145,
+        148,
+        169
+      ],
+      "both_correct_count": 105,
+      "both_wrong_count": 64,
+      "baseline_extraction_failed_ids": [],
+      "variant_extraction_failed_ids": []
+    }
+  }
+}

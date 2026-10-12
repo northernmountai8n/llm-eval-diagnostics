@@ -126,7 +126,7 @@ def main() -> int:
     print("=" * 68)
     from pathlib import Path
 
-    for d in ("src", "scripts", "runs", "reports", "notes", "runs/figures"):
+    for d in ("src", "scripts", "runs", "reports", "notes", "reports/figures"):
         p = Path(d)
         exists = p.exists()
         if not exists:
@@ -135,12 +135,10 @@ def main() -> int:
 
     print()
     if gpu_ok:
-        print("结论：环境可用，可以开始 Day 2 的评测。")
+        print("结论：环境可用，可以运行项目评测。")
         print()
-        print("下一步（复制即用，先跑最小规模确认链路）：")
-        print("  lm_eval --model hf \\")
-        print("      --model_args pretrained=Qwen/Qwen2.5-1.5B,dtype=bfloat16 \\")
-        print("      --tasks arc_easy --device cuda:0 --batch_size 4 --limit 20")
+        print("最小链路检查（PowerShell 单行命令；--limit 仅用于试跑）：")
+        print("  lm_eval run --model hf --model_args 'pretrained=Qwen/Qwen2.5-1.5B,revision=8faed761d45a263340a0528343f099c05c9a4323,dtype=bfloat16' --tasks arc_easy --num_fewshot 0 --device cuda:0 --batch_size 1 --limit 20 --seed '0,1234,1234,1234'")
     else:
         print("结论：GPU 不可用，先解决环境问题。")
         print()

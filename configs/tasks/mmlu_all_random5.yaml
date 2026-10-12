@@ -1,0 +1,21 @@
+task: custom_mmlu_all_random5
+dataset_path: cais/mmlu
+dataset_name: all
+dataset_kwargs:
+  revision: c30699e8356da336a370243923dbaf21066bb9fe
+test_split: test
+fewshot_split: validation
+fewshot_config:
+  sampler: default
+output_type: multiple_choice
+num_fewshot: 5
+description: "The following are multiple choice questions (with answers) about various subjects.\n\n"
+doc_to_text: "{{question.strip()}}\nA. {{choices[0]}}\nB. {{choices[1]}}\nC. {{choices[2]}}\nD. {{choices[3]}}\nAnswer:"
+doc_to_choice: ["A", "B", "C", "D"]
+doc_to_target: answer
+metric_list:
+  - metric: acc
+    aggregation: mean
+    higher_is_better: true
+metadata:
+  version: 1.0

@@ -1,9 +1,15 @@
 # Day 3 笔记：一个样本如何从数据集变成分数
 
-> 全部结论来自**本机安装的 lm-eval 0.4.13 源码**，行号可直接跳转核对：
+> 评测实现与行号以**本机安装的 lm-eval 0.4.13 源码**为准：
 > `D:\program\miniconda\envs\lmeval\Lib\site-packages\lm_eval\`
 >
 > ⚠️ **凡与调研报告冲突处，以本文为准**（本文是源码实测，调研报告里有两处把归一化口径写成了"字节长度"，已在下文标注）。
+
+## 完成范围与证据
+
+- 本日重点是**解释评测口径**，不是又跑一组模型：数值来自 Day 2 保存的 0-shot 结果，见 `runs/day02_limit100/` 与 `runs/day02_limit500/`。
+- 已核对本机 `arc_easy.yaml`、`ConfigurableTask`、`ContextSampler` 与结果 JSON；并阅读[官方 Task Guide](https://github.com/EleutherAI/lm-evaluation-harness/blob/main/docs/task_guide.md)。官方 `main` 文档可能与本机 0.4.13 不完全一致，涉及本次运行的细节以本机源码和结果文件为准。
+- 本文末尾补了 HellaSwag、MMLU 的配置对照，回答 Day 3 目标中的三个任务有何不同。
 
 ---
 
@@ -38,7 +44,7 @@ metadata:
 
 **两个容易看漏的点：**
 
-1. **`doc_to_target` 返回的是 int 下标，不是文本。** `{{choices.label.index(answerKey)}}` 在 Jinja 里对 `choices.label`（如 `["A","B","C","D"]`）调 `.index("B")`，得到 `1`。所以 gold 是整数，后面 `task.py:1525` 走的正是 `isinstance(gold, int)` 分支。
+1. **`doc_to_target` 最终返回 int 下标，不是选项文本。** `{{choices.label.index(answerKey)}}` 经模板渲染先得到字符串（如 `"1"`），`ConfigurableTask.doc_to_target` 在 `api/task.py:1253-1255` 将纯数字字符串转为整数 `1`。所以 `process_results` 在 `:1525` 走 `isinstance(gold, int)` 分支。注意：`--log_samples` 保存的 `target` 字段可能显示字符串 `"0"`，那是记录格式，不能据此断言内部比较时还是字符串。
 2. **`metric_list` 同时列了 `acc` 和 `acc_norm`**，两者共用 `aggregation: mean`。这就是你 Day 2 跑出两行数字的原因——不是框架默认给两个，是 YAML 明确要求的。
 
 ---
@@ -58,13 +64,13 @@ fewshot_ctx = self.fewshot_context(
 
 实测印证：Day 2 的运行输出里 `n-shot = 0`，且日志行是 `num_fewshot: None`（None 是"未指定"，不是"用了 0"——两者在框架内部才被等价化）。
 
-> 顺带一个校验规则：如果 YAML 里写了 `num_fewshot > 0` 却没写 `fewshot_split`，框架会直接报错（`api/task.py:924-927`）。
+> 本机版本中，命令行把 ARC-Easy 改成 5-shot 且没有 `fewshot_split` 时，`api/task.py:924-930` 会**警告并回退**，`Task.fewshot_docs()` 再优先取 `train`（`:204-219`）。不会仅因缺少 `fewshot_split` 直接报错。官方 Task Guide 的说明与本机行为有差异，复现本次实验应按本机源码与运行日志理解。
 
 ---
 
 ## 三、⭐ `acc` vs `acc_norm`：到底除以什么
 
-### 结论：除以 **continuation 的字符数**（`len(str)`）——不是字节数，也不是 token 数
+### 结论：除以**选项文本的字符数**（`len(choice)`）——不是字节数，也不是 token 数
 
 源码（`api/task.py:1489-1568`，位于 `ConfigurableTask.process_results`）：
 
@@ -97,7 +103,7 @@ elif self.OUTPUT_TYPE == "multiple_choice":
 
 ### 它解决什么问题
 
-`lls` 是「整段 continuation 的 log 概率之和」。选项文字越长，token 越多，求和项越多，log 概率和**天然更负**。直接比大小 → 系统性偏向短选项。除以长度，是把这个"项数效应"折掉，让比较落回"平均每个字符的似然"。
+`lls` 是「整段 continuation 的 log 概率之和」。较长选项通常包含更多 token，求和项往往更多，直接比较总和可能偏向短选项。按**字符数**相除是缓解长度影响的一种评测口径；字符数不等于 token 数，也不能保证完全消除长度偏差。这里分母是 YAML 中的选项文本长度，而推理时的 continuation 还带有 `target_delimiter` 插入的前导空格。
 
 ### 为什么 Day 2 实测两者会翻转
 
@@ -106,7 +112,7 @@ elif self.OUTPUT_TYPE == "multiple_choice":
 | 100 | 0.710 | **0.760** |
 | 500 | **0.752** | 0.714 |
 
-长度差异在样本量小时更容易被噪声掩盖或放大——**n=100 的 95% 置信区间宽达 18 个百分点**，足够容纳两个方向的结论。这正说明"口径差异"和"样本量"两个因素必须一起看。
+这 100 题是 500 题的前 100 题，**两行不是独立重复实验**。前 100 题 `acc` 答对 71 题、`acc_norm` 答对 76 题；扩大到 500 题后分别答对 376、357 题。因此新加入的 400 题分别答对 305/400（76.25%）和 281/400（70.25%），高低顺序随题目构成改变。单项标准误在 n=100 时约 4.3–4.6 个百分点，在 n=500 时约 1.9–2.0 个百分点；不能只凭这两行汇总值判断两种指标谁“显著更好”，也不能把嵌套样本的差异称为运行随机波动。
 
 ---
 
@@ -135,7 +141,8 @@ construct_requests()                                         api/task.py:1374-14
     │                idx=i)                           ← idx 记住"第几个选项"
     │
     ▼
-每道题 4 条 Instance（实测 limit=100 → 约 399 条请求，即 100×4 减去末尾）
+通常每道题 4 条 Instance；若某题只有 3 个选项则为 3 条。
+实测 limit=500 → 1998 条请求：498 道四选题 + 2 道三选题。
     │
     ▼
 LM.loglikelihood(ctx, " " + choice)                          models/huggingface.py
@@ -167,7 +174,7 @@ stderr                                                       api/metrics.py:337-
 输出表：  |arc_easy | 1 | none | 0 | acc | ↑ | 0.710 | ± | 0.0456 |
 ```
 
-**注**：`Filter` 列显示 `none`，因为 `arc_easy.yaml` 没有配置 filter pipeline。filter 的作用是在 `process_results` **之后**对输出做再加工（如 `regex` 抽取、`take_first`），ARC 不需要。
+**注**：`Filter` 列显示 `none`，因为 `arc_easy.yaml` 没有配置自定义 filter pipeline。执行顺序是**模型响应 → `apply_filters()` → `process_results()` → 聚合**（本机 `evaluator.py:615,639-640`）；filter 可做 `regex` 抽取、`take_first` 等，并不是在算完每题指标后才处理。
 
 ---
 
@@ -199,14 +206,14 @@ stderr_fn(items) if (stderr_fn and len(items) > 1) else "N/A"
 
 ### 5.2 `acc_bytes` 的存在，对中文 benchmark 是大事
 
-`acc_norm` 按**字符数**归一化，`acc_bytes` 按 **UTF-8 字节数**归一化。对纯英文两者等价（1 字符 = 1 字节）；**对中文完全不同**：
+`acc_norm` 按**字符数**归一化，`acc_bytes` 按 **UTF-8 字节数**归一化。纯 ASCII 文本中二者等价；含中文时分母的数值会不同：
 
 | 选项文本 | `len()` 字符数 | `len(encode('utf-8'))` 字节数 |
 |---|---|---|
 | `"北京"` | 2 | 6 |
 | `"中华人民共和国"` | 7 | 21 |
 
-所以 Day 8 接入 **C-Eval / CMMLU** 时，这个选择会直接改变分数：两个中文选项如果字符数相同但字节数差 3 倍，`acc_norm` 和 `acc_bytes` 会给出**方向不同**的判断。
+但**分母不同不等于预测一定不同**。若同一道题的所有选项都只由三字节汉字组成，每个字节长度都是字符长度的 3 倍，两个指标的选项排序仍然相同。只有选项间的 UTF-8 字节/字符比例不同（如中文与 ASCII 混合、不同标点混合）时，二者的排序才**可能**改变。Day 8 接入 C-Eval / CMMLU 时应检查真实选项，而不能预设分数必变。
 
 ⚠️ **调研报告里的错误**（已核对源码，均为笔误）：
 - `调研报告\大模型预训练评测体系_技术现状报告.md:403`：「按选项的**字节长度**归一化」← **错，是字符长度**
@@ -224,11 +231,11 @@ stderr_fn(items) if (stderr_fn and len(items) > 1) else "N/A"
 
 > `acc` 直接比各选项 loglikelihood 之和取最大；`acc_norm` 先把这个和除以选项的**字符数**再比。
 >
-> 为什么要除：log 概率是逐 token 累加的，选项越长求和项越多、logprob 和天然越负，直接比会**系统性偏向短选项**。除以长度是把"项数效应"折掉。
+> 为什么要除：log 概率逐 token 累加，较长选项通常累加项更多，直接比可能偏向短选项。字符长度归一化是缓解这种影响的一种口径，但不等于严格按 token 数求平均。
 >
-> 我核过源码（lm-eval 0.4.13 `api/task.py:1494,1511`），除数确实是**字符数** `len(choice)`，不是字节数也不是 token 数——框架另有 `acc_bytes` 指标用 UTF-8 字节数做归一化，两者在中文上会给出不同结论。
+> 我核过源码（lm-eval 0.4.13 `api/task.py:1494,1511`），除数确实是**字符数** `len(choice)`，不是字节数也不是 token 数——框架另有 `acc_bytes` 指标用 UTF-8 字节数做归一化；中英混合选项时两种口径可能改变排序。
 >
-> 而且这两个指标**不总是同向**。我在 Qwen2.5-1.5B / ARC-Easy 上实测：limit=100 时 acc_norm 比 acc 高 5 个点，limit=500 时反而低 3.8 个点——**大小关系翻转了**。所以报告分数时必须写清用哪个口径。
+> 而且这两个指标**不总是同向**。我在 Qwen2.5-1.5B / ARC-Easy 上实测：前 100 题 acc_norm 比 acc 高 5 个点，前 500 题反而低 3.8 个点——**汇总值的大小关系变了**。这两个样本集合是嵌套的，不能将差异当成独立运行波动；报告分数时必须写清样本范围和指标口径。
 
 **Q（追问）：ARC-Easy 是几 shot？**
 
@@ -264,8 +271,7 @@ gold: answerKey='A' -> label.index('A') = 0
 | 同题内选项字符长度**极差** | 最小 0 / **中位 6** / **最大 39** |
 | 最长选项字符数 | 79 |
 
-中位极差 6 个字符，而答案平均长度约 23 字符——**约 26% 的长度差异**。这就是 `acc` 与 `acc_norm`
-能差出好几个点的物理来源。
+中位极差 6 个字符，而答案平均长度约 23 字符——**约 26% 的长度差异**。这说明选项长度足以影响两种打分口径；要确定某一道题为何翻转，还需查看该题各选项的 loglikelihood。
 
 ### 7.3 ⚠️ 但"正确选项更短"这个直觉**不成立**
 
@@ -278,8 +284,7 @@ gold: answerKey='A' -> label.index('A') = 0
 调研报告里"长选项天然更负，所以 `acc` 偏袒短选项"这句话描述的是**机制**（没错），但**不能推出**
 "benchmark 里正确答案更短"。我实测的是正确选项**略长**。
 
-所以正确的表述是：`acc` 对长选项有系统性惩罚；这个惩罚是否有利于"正确答案"完全取决于数据集，
-**不能假设方向**。这正是 `acc_norm` 存在的理由——它把这个与语义无关的因素直接消掉。
+所以更稳妥的表述是：`acc` 的总对数概率比较**可能**对长选项不利；这种影响是否有利于正确答案取决于数据，**不能预设方向**。`acc_norm` 用字符长度作近似调整，但不能保证完全消除 token 数、分词方式等因素的影响。
 
 ### 7.4 ⭐ 连"纯英文"基准都有非 ASCII 字符
 
@@ -304,8 +309,7 @@ gold: answerKey='A' -> label.index('A') = 0
 
 **三个后果：**
 
-1. **`acc_norm` 与 `acc_bytes` 在这些样本上不等价**（`°` 是 1 字符 / 2 字节）。前 100 条里有 1 条命中。
-   英文基准上影响极小，**但中文基准上是 3 倍差距**。
+1. **`acc_norm` 与 `acc_bytes` 在这些文本上的分母可能不同**（`°` 是 1 字符 / 2 字节）。前 100 条里有 1 条含非 ASCII 字符；是否改变最终预测还要比较该题各选项的实际长度比例与 loglikelihood。
 2. **tokenization 受影响**：`°C` 与 `C` 不是同一个 token 序列，`-95°C` 的 token 数可能与预期不同。
 3. **这是 Day 11「编码与脏字符」检查的真实素材**——`src/data_audit.py` 的第 6 类检查（全角/零宽/混用）
    在这里有了非虚构的命中案例，可以写进报告。
@@ -315,8 +319,27 @@ gold: answerKey='A' -> label.index('A') = 0
 
 ---
 
-## 待办（Day 4 衔接）
+## 八、官方 Task Guide 与另两个任务的口径
 
-- [ ] 亲手跑 `--num_fewshot 0` / `5` 对照，验证 few-shot 示例是怎么从 `train` split 抽的
-- [ ] 读 `lm_eval/tasks/hellaswag/hellaswag.yaml`，找 `fewshot_split` / `fewshot_delimiter`
-- [ ] 确认 `--seed` 到底影响什么（日志显示 four seeds: 0 / 1234 / 1234 / 1234）
+[官方 Task Guide](https://github.com/EleutherAI/lm-evaluation-harness/blob/main/docs/task_guide.md) 把任务配置分成数据集、prompt、评分、filter 等部分。复现一个分数，需要同时保留 YAML 配置与框架版本：只说“跑了 ARC-Easy”不足以还原 prompt 和判分方式。`doc_to_text` 组织题目，`doc_to_choice` 给出候选答案，`doc_to_target` 定义正确答案；`output_type: multiple_choice` 使框架分别计算各候选续写的 loglikelihood。若有 filter，它先处理模型响应，之后才逐题判分与聚合。官方文档还介绍 `!function` 预处理、YAML `include` 及 `filter_list`；未来可参考[去污染说明](https://github.com/EleutherAI/lm-evaluation-harness/blob/main/docs/decontamination.md)和[常见陷阱](https://github.com/EleutherAI/lm-evaluation-harness/blob/main/docs/footguns.md)。
+
+本机 0.4.13 的三个任务配置对照（**以下是配置阅读结果，不是三个任务都已实测**）：
+
+| 任务 | 评测集 / few-shot 来源 | 题目与候选答案 | 输出指标 |
+|---|---|---|---|
+| ARC-Easy | `test` / 未指定时回退 `train`；默认 0-shot，命令行可改 5-shot | `Question: ...\nAnswer:`；候选为选项全文 | `acc`、`acc_norm` |
+| HellaSwag | `validation` / 未指定时回退 `train` | `process_docs` 先整理文本；候选为句子续写 | `acc`、`acc_norm` |
+| MMLU 默认任务组 | 各学科 `test` / `dev`；`first_n` 取示例，具体 shot 数由运行配置决定 | 题干列出 A–D；候选是字母 `A/B/C/D` | 各学科 `acc`，任务组按样本量加权聚合 |
+
+MMLU 在本机不是单个 `mmlu.yaml`：任务组定义在 `tasks/mmlu/default/_mmlu.yaml`，学科模板在 `tasks/mmlu/default/_default_template_yaml`。HellaSwag 的配置在 `tasks/hellaswag/hellaswag.yaml`。它们的 prompt、候选答案形式与 ARC-Easy 不同，因此不能把不同任务的分数直接当成同一种能力量尺。
+
+---
+
+## Day 4 衔接（截至 2026-09-25）
+
+- [x] 已有 0-shot、500 题基线；5-shot、500 题结果保存在 `runs/day04_arc_easy_5shot_seed1234/`。
+- [x] 已查看首题 prompt：前 5 道训练集示例各有答案，最后的测试题停在 `Answer:`，各选项另作为 continuation 打分。
+- [x] 已核对 HellaSwag 配置及 few-shot 回退规则；缺失的 `fewshot_split` 不会阻止 ARC-Easy 的 5-shot 运行。
+- [x] 已核对种子：`--seed 0,1234,1234,1234` 的第四位控制 few-shot 抽样；本机 `api/task.py:560-563` 把它传给 sampler，`api/samplers.py:57-62` 随机无放回取示例。
+- [x] Day 4 的结果对照表、运行台账与面试题草稿已归档，见 `runs/day04_comparison.md`、`RUNS.md`、`notes/04-fewshot与prompt.md`。
+- [ ] 不同 seed 的三次运行是加餐；当前只完成 seed 1234，尚不能报告 seed 波动范围。

@@ -1,0 +1,67 @@
+{
+  "source": "runs\\day06_qwen15_gsm8k_s5_n200\\Qwen__Qwen2.5-1.5B",
+  "method": "13 consecutive normalized words in question text",
+  "normalization": "Unicode NFKC, casefold, Unicode word tokens; punctuation separates words",
+  "test_question_count": 200,
+  "unique_fewshot_question_count": 941,
+  "test_questions_shorter_than_ngram": [],
+  "within_test": {
+    "test_questions_with_overlap": 0,
+    "test_question_ids_with_overlap": [],
+    "question_pair_count": 0,
+    "exact_duplicate_pair_count": 0,
+    "exact_duplicate_pairs": [],
+    "matched_correct": 0,
+    "matched_total": 0,
+    "unmatched_correct": 124,
+    "unmatched_total": 200,
+    "examples": []
+  },
+  "against_logged_fewshot_questions": {
+    "test_questions_with_overlap": 0,
+    "test_question_ids_with_overlap": [],
+    "question_pair_count": 0,
+    "exact_duplicate_pair_count": 0,
+    "exact_duplicate_pairs": [],
+    "matched_correct": 0,
+    "matched_total": 0,
+    "unmatched_correct": 124,
+    "unmatched_total": 200,
+    "examples": []
+  },
+  "within_test_8gram_sensitivity": {
+    "test_questions_with_overlap": 4,
+    "test_question_ids_with_overlap": [
+      39,
+      110,
+      123,
+      157
+    ],
+    "question_pair_count": 2,
+    "exact_duplicate_pair_count": 0,
+    "exact_duplicate_pairs": [],
+    "matched_correct": 1,
+    "matched_total": 4,
+    "unmatched_correct": 123,
+    "unmatched_total": 196,
+    "examples": [
+      {
+        "test_id": 39,
+        "reference_id": 123,
+        "shared_ngram_count": 1,
+        "example_shared_text": "miles per hour how many miles can she",
+        "test_question": "Dana can run at a rate of speed four times faster than she can walk, but she can skip at a rate of speed that is half as fast as she can run. If she can skip at 3 miles per hour, how many miles can she travel in six hours if she spends one-third of the time running and two-thirds of the time walking?",
+        "reference_question": "Rosie can run 10 miles per hour for 3 hours. After that, she runs 5 miles per hour. How many miles can she run in 7 hours?"
+      },
+      {
+        "test_id": 110,
+        "reference_id": 157,
+        "shared_ngram_count": 1,
+        "example_shared_text": "are having a contest to see who can",
+        "test_question": "Marcell and Beatrice are having a contest to see who can eat the most fruit roll-ups, so they unroll as many as they can find. Unfortunately, someone makes a mistake and Beatrice's was two roll-ups wide and 24 rolls up long while Marcell's was 3 roll-ups wide and 14 roll-ups long. If they both ate their entire amount, how many did they eat on average?",
+        "reference_question": "Blake and Kelly are having a contest to see who can run the most in 15 minutes. They decide to do it on a football field that is 100 yards long. Blake runs back and forth 15 times. Kelly runs back and forth once, and then decides that she doesn't want to run next to Blake, so she starts to run to the 40-yard line and back. She does this 34 times. How much farther does the winner run than the loser?"
+      }
+    ]
+  },
+  "scope_warning": "Logged few-shot questions are only a subset of GSM8K train; neither comparison proves model pretraining exposure."
+}

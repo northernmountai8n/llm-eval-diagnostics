@@ -42,10 +42,10 @@ scipy==1.17.1
 #     OSError: Can't load the model for 'Qwen/Qwen2.5-1.5B'（指向"路径错误"，实际路径没问题）
 #   禁用后回退经典 HTTP 下载（支持断点续传），实测稳定。
 #   设置：conda env config vars set HF_HUB_DISABLE_XET=1 -n lmeval
-#   同批设置的还有 HF_HOME / PIP_CACHE_DIR / TORCH_HOME，均指向 D:\桌面\个人\工程\ 下
+#   HF_HOME / PIP_CACHE_DIR / TORCH_HOME 可按机器磁盘空间另行设置；README 使用仓库内缓存目录。
 
 # --- Day 11 起追加：数据质检与分析 ---
-# matplotlib==   # 方差图（scipy 已随 lm-eval 装入，见上方）
+# 方差图由 src/variance.py 使用标准库生成 SVG，不需要 matplotlib。
 
 # --- Day 18 起追加：异步并发 ---
 # httpx==0.28.1  # 已作为 huggingface_hub 的依赖装入

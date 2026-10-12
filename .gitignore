@@ -23,7 +23,8 @@ env/
 # ⚠️ 用 runs/* 而不是 runs/：忽略目录**本身**会让内部文件无法再用 ! 例外放行。
 # runs/* 只忽略目录内的条目，下面的 ledger.jsonl 例外才生效。
 runs/*
-reports/figures/
+reports/figures/*.png
+reports/day20_gsm8k_error_sample.csv
 
 # --- 模型权重与缓存（动辄数 GB）---
 *.safetensors
@@ -38,12 +39,14 @@ hf_cache/
 *.parquet
 *.arrow
 *.jsonl
+data/day19_ceval_opencompass/
 
 # --- 例外：必须入库的实验记录 ---
 # RUNS.md 是门面；runs/ledger.jsonl 是它的**唯一数据源**，
 # 只有几 KB，但没了就无法重新生成台账 —— 那"可复现"就断了。
 !RUNS.md
 !runs/ledger.jsonl
+!runs/day04_comparison.md
 
 # --- Notebook ---
 .ipynb_checkpoints/
